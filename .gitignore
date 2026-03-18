@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual Environments
+venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+# Modify later: haven't decided how the folders would be organized.
+# Ignore everything in 'data/raw' except '.gitkeep', so the folder gets tracked.
+# data/raw/*
+# !data/raw/.gitkeep

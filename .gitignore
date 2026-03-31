@@ -6,6 +6,9 @@ __pycache__/
 venv/
 .env
 
+# Local config (paths, secrets)
+config.yaml
+
 # Jupyter
 .ipynb_checkpoints/
 
@@ -14,7 +17,12 @@ venv/
 Thumbs.db
 
 
-# Modify later: haven't decided how the folders would be organized.
-# Ignore everything in 'data/raw' except '.gitkeep', so the folder gets tracked.
-# data/raw/*
-# !data/raw/.gitkeep
+# All scraped data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Scraper files
+scrapers/*
+!scrapers/.gitkeep

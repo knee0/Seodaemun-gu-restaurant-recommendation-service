@@ -1,26 +1,22 @@
-import A_split_sentences as step1
-import B_add_aspects as step2
-import C_detect_sentiments as step3
-import D_calc_scores as step4
-import E_show_visuals as step5
+import A_tokenize as step1
+import B_score_aspects as step2
+import C_add_name as step3
+import D_show_visuals as step4
 
 def run_pipeline():
     print("--- Start ABSA Pipeline ---")
 
-    print("1/5: Splitting sentences...")
+    print("1/4: Tokenize reviews...")
     step1.main()
 
-    print("2/5: Tagging aspects...")
+    print("2/4: Detecting sentiment...")
     step2.main()
 
-    print("3/5: Detecting sentiment...")
+    print("3/4: Adding restaurant names...")
     step3.main()
 
-    print("4/5: Calculating final scores...")
+    print("4/4: Visualizing...")
     step4.main()
-
-    print("5/5: Creating visuals...")
-    step5.main()
     
     print("--- All Done. ---")
 

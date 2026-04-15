@@ -21,6 +21,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/interim/*
 !data/interim/.gitkeep
+!data/interim/absa_prototype/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
 

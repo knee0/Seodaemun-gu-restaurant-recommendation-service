@@ -17,13 +17,13 @@ config.yaml
 Thumbs.db
 
 # All scraped data
-data/raw/*
-!data/raw/.gitkeep
-data/interim/*
-!data/interim/.gitkeep
-!data/interim/absa_prototype/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
+data/raw/**
+!data/raw/**/.gitkeep
+data/interim/**
+!data/interim/**/
+!data/interim/**/.gitkeep
+data/processed/**
+!data/processed/**/.gitkeep
 
 # Scraper files
 scrapers/*

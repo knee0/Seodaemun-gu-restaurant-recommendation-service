@@ -4,7 +4,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
-TOKENS = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "A_tokenize.json"
+TOKENS = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "A_tokenized.json"
 
 with open(TOKENS, "r", encoding="utf-8") as f:
     data = json.load(f)

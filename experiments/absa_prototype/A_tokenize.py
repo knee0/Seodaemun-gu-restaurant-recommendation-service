@@ -6,7 +6,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent.parent
 INPUT_PATH = PROJECT_ROOT / "data" / "raw" / "naver_reviews.json"
-OUTPUT_PATH = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "A_tokenize.json"
+OUTPUT_PATH = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "A_tokenized.json"
 
 # Prototype of ABSA(Aspect-Based Sentiment Analysis)
 

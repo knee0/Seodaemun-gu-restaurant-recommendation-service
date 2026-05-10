@@ -24,7 +24,3 @@ data/interim/**
 !data/interim/**/.gitkeep
 data/processed/**
 !data/processed/**/.gitkeep
-
-# Scraper files
-scrapers/*
-!scrapers/.gitkeep

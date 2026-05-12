@@ -1,9 +1,12 @@
-# Basic GitHub commands ദ്ദി(◝ ⩊ ◜)
+# Basic GitHub commands
 
-#### Setup
+### 수집한 데이터는 공유하지 말아주세요!
+합법적으로 수집한 것이 아니라서, 나중에 레포를 public으로 전환하는데 차질이 생겨요.
+
+#### Removed problematic commit on 5/12. Just now, before working:
 ```
-git clone https://github.com/eastYonsei/test-mining-project.git
-cd test-mining-project
+git fetch origin
+git reset --hard origin/main
 ```
 
 #### Before working

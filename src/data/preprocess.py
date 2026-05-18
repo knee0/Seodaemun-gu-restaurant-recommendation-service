@@ -5,7 +5,7 @@ from kiwipiepy import Kiwi
 from src.utils.paths import DATA_DIR, RAW_DATA
 
 INPUT = RAW_DATA
-OUTPUT = DATA_DIR / "interim" / "step1_preprocessed.json"
+OUTPUT = DATA_DIR / "interim" / "preprocessed.json"
 kiwi = Kiwi()
 
 
@@ -17,6 +17,23 @@ def normalize(text):
     text = re.sub(r"\s+", " ", text).strip()
 
     return text
+
+# Scraped from most common EC
+CLAUSE_EC = {'는데', 'ㄴ데', '은데', '지만'}
+
+def clause_split(tokens):
+    clauses = []
+    cur_clause = []
+
+    for t in tokens:
+        cur_clause.append(t)
+        if t.tag == 'EC' and t.form in CLAUSE_EC:
+            clauses.append(cur_clause)
+            cur_clause = [] # Clear for next
+    if cur_clause: # Last piece of sentence
+        clauses.append(cur_clause)
+
+    return clauses
 
 
 def preprocess(data):
@@ -32,22 +49,25 @@ def preprocess(data):
             if not text:
                 continue
 
+
             # Split by sentence: BERT has length limits
             # Also ensures better aspect-sentiment mapping
             sentences = kiwi.split_into_sents(text)
 
             for sentence in sentences:
-                tokens = kiwi.tokenize(sentence.text)
+                sentence_tokens = kiwi.tokenize(sentence.text)
+                
+                split_clauses = clause_split(sentence_tokens)
 
-                # Format as Morpheme/Tag -> ['맛은'/NNG], ['좋'/VA], ...
-                morpheme_tags = [f"{t.form}/{t.tag}" for t in tokens]
-
-                dataset.append({
+                for c_idx, clause_tokens in enumerate(split_clauses):
+                    clause_text = kiwi.join((t.form, t.tag) for t in clause_tokens)
+                    
+                    dataset.append({
                         "rev_id": rev_id,
-                        "raw": sentence.text,
-                        "tokens": morpheme_tags,
-                        "token_count": len(morpheme_tags),
-                })
+                        "raw": clause_text,
+                        "tokens": [f"{t.form}/{t.tag}" for t in clause_tokens],
+                        "token_count": len(clause_tokens),
+                    })
                                 
     return dataset
 

@@ -2,7 +2,7 @@ import json
 from src.utils.paths import DATA_DIR
 from collections import Counter
 
-INPUT = DATA_DIR / "interim" / "step1_preprocessed.json"
+INPUT = DATA_DIR / "interim" / "preprocessed.json"
 
 def audit_data(data):
     all_tokens = []

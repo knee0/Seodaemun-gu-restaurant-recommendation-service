@@ -24,3 +24,7 @@ data/interim/**
 !data/interim/**/.gitkeep
 data/processed/**
 !data/processed/**/.gitkeep
+
+# No models
+src/sentiment/models/**
+!src/sentiment/models/**/.gitkeep

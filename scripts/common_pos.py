@@ -1,5 +1,5 @@
 import json
-from src.utils.paths import DATA_DIR
+from src.utils import DATA_DIR, load_json
 from collections import Counter
 
 INPUT = DATA_DIR / "interim" / "preprocessed.json"
@@ -31,24 +31,20 @@ def get_seed_clues(data):
 
 
 def main():
-    with open(INPUT, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
+    data = load_json(INPUT)
     common_nouns, common_nnps, common_adjs = get_seed_clues(data)
 
     print("=== TOP 100 COMMON ===")
     for word, count in common_nouns:
        print(f"{word}: {count}", end=" | ")
 
-    print()
     print("=== TOP 100 COMMON ===")
     for word, count in common_nnps:
         print(f"{word}: {count}", end=" | ")
 
-    print()
-#    print("\n=== TOP 100 COMMON ===")
-#    for word, count in common_adjs:
-#       print(f"{word}: {count}", end=" | ")
+    print("\n=== TOP 100 COMMON ===")
+    for word, count in common_adjs:
+       print(f"{word}: {count}", end=" | ")
 
 if __name__ == "__main__":
     main()

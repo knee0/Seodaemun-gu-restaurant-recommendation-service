@@ -32,5 +32,5 @@ prototype/data/*
 !prototype/data/**/.gitkeep
 
 # No models
-src/sentiment/models/*
-!src/sentiment/models/**/.gitkeep
+models/*
+!models/**/.gitkeep

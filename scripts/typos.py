@@ -1,5 +1,5 @@
 import json
-from src.utils.paths import DATA_DIR
+from src.utils import DATA_DIR, load_json, save_json
 from collections import Counter
 
 INPUT = DATA_DIR / "interim" / "preprocessed.json"
@@ -24,9 +24,7 @@ def audit_data(data):
     return sorted(new_words, key=lambda x: x[1], reverse=True), typos
 
 def main():
-    with open(INPUT, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
+    load_json(INPUT)
     new_words, typos = audit_data(data)
 
     print("Potential New Words:")

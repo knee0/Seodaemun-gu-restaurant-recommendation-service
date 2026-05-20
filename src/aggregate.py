@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from statistics import mean
 
-from src.utils.paths import DATA_DIR, INTERIM, RAW_DATA
+from src.utils import DATA_DIR, INTERIM, RAW_DATA
 
 
 # BERT/사전 기반 점수가 섞여 들어올 수 있으므로 최종 집계에서 사용할 표준 카테고리명으로 맞춰주기.

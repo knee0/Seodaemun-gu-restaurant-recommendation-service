@@ -1,6 +1,5 @@
 import json
 from collections import defaultdict
-
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -13,7 +12,9 @@ from src.score.aggregate import (
     save_category_rankings,
     save_scores,
 )
-from src.utils.paths import DATA_DIR, MODELS, RAW_DATA, INTERIM
+from src.utils import DATA_DIR, MODELS, RAW_DATA, INTERIM, load_json, save_json
+INPUT = INTERIM / "preprocessed.json"
+OUTPUT = INTERIM / "absa_scores.json"
 
 print(torch.cuda.is_available())
 
@@ -31,12 +32,10 @@ model = model.half()
 model.to(device)
 model.eval()
 
-with open(RAW_DATA, "r", encoding="utf-8") as f:
-    raw_data = json.load(f)
+raw_data = load_json(RAW_DATA)
 id_to_name = {r_id: r_data.get("metadata", {}).get("name", r_id) for r_id, r_data in raw_data.items()}
 
-with open(INTERIM / "preprocessed.json", "r", encoding="utf-8") as f:
-    pre_data = json.load(f)
+pre_data = load_json(INPUT)
 
 restaurant_tracking = defaultdict(lambda: {
     "review_chunks": defaultdict(lambda: {
@@ -162,8 +161,7 @@ for r_id, info in restaurant_tracking.items():
 
 sorted_results = aggregate_restaurant_scores(restaurant_results, raw_data)
 
-with open(INTERIM/"absa_scores.json", "w", encoding="utf-8") as f:
-    json.dump(sorted_results, f, ensure_ascii=False, indent=2)
+save_json(sorted_results, OUTPUT, 2)
 save_scores(sorted_results, DATA_DIR / "final" / "restaurant_scores.json")
 save_category_rankings(
     build_category_rankings(sorted_results),

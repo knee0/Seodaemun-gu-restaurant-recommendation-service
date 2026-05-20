@@ -1,10 +1,8 @@
 from collections import Counter
 import json
-from pathlib import Path
+from prototype.utils.paths import DATA_DIR
 
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent
-TOKENS = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "A_tokenized.json"
+INPUT = DATA_DIR / "tokenized.json"
 
 with open(TOKENS, "r", encoding="utf-8") as f:
     data = json.load(f)

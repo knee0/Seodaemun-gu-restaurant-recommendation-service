@@ -1,7 +1,7 @@
-import A_tokenize as step1
-import B_score_aspects as step2
-import C_add_name as step3
-import D_show_visuals as step4
+import prototype.src.tokenize as step1
+import prototype.src.lexicon as step2
+import prototype.src.attach_name as step3
+import prototype.src.show_visuals as step4
 
 def run_pipeline():
     print("--- Start ABSA Pipeline ---")

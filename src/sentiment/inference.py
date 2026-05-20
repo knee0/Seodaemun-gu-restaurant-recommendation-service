@@ -1,14 +1,19 @@
 import json
-import pandas as pd
-from tqdm import tqdm
-from src.utils.paths import MODELS, RAW_DATA, INTERIM
-import numpy as np
-from datasets import Dataset, ClassLabel
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
 from collections import defaultdict
+
+import numpy as np
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer, DataCollatorWithPadding
+from tqdm import tqdm
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+from src.score.aggregate import (
+    aggregate_restaurant_scores,
+    aggregate_review_aspect_scores,
+    build_category_rankings,
+    save_category_rankings,
+    save_scores,
+)
+from src.utils.paths import DATA_DIR, MODELS, RAW_DATA, INTERIM
 
 print(torch.cuda.is_available())
 
@@ -34,8 +39,10 @@ with open(INTERIM / "preprocessed.json", "r", encoding="utf-8") as f:
     pre_data = json.load(f)
 
 restaurant_tracking = defaultdict(lambda: {
-    "aspect_scores": {a: [] for a in ASPECTS},
-    "reviews": []
+    "review_chunks": defaultdict(lambda: {
+        "aspect_scores": {a: [] for a in ASPECTS},
+        "sentences": [],
+    })
 })
 
 for i in tqdm(range(0, len(pre_data), BATCH_SIZE)):
@@ -51,12 +58,13 @@ for i in tqdm(range(0, len(pre_data), BATCH_SIZE)):
             continue
             
         # Extract restaurant ID from your rev_id (e.g., "32876009_0" -> "32876009")
-        r_id = item["rev_id"].split("_")[0]
+        rev_id = item["rev_id"]
+        r_id = rev_id.split("_")[0]
         
         for aspect in ASPECTS:
             flat_texts.append(text)
             flat_aspects.append(aspect)
-            meta_info.append((r_id, text, aspect))
+            meta_info.append((r_id, rev_id, text, aspect))
             
     if not flat_texts:
         continue
@@ -85,52 +93,82 @@ for i in tqdm(range(0, len(pre_data), BATCH_SIZE)):
         chunk_probs = pos_probs[idx : idx + num_aspects]
         
         current_rid = chunk_meta[0][0]
-        current_text = chunk_meta[0][1]
+        current_rev_id = chunk_meta[0][1]
+        current_text = chunk_meta[0][2]
         
         rev_result = {}
+        review_bucket = restaurant_tracking[current_rid]["review_chunks"][current_rev_id]
         for meta, prob in zip(chunk_meta, chunk_probs):
-            aspect = meta[2]
+            aspect = meta[3]
             prob_val = round(float(prob), 3)
             
             rev_result[aspect] = prob_val
-            restaurant_tracking[current_rid]["aspect_scores"][aspect].append(prob)
+            review_bucket["aspect_scores"][aspect].append(prob)
             
-        restaurant_tracking[current_rid]["reviews"].append({
+        review_bucket["sentences"].append({
+            "rev_id": current_rev_id,
             "review": current_text,
             "analysis": rev_result
         })
 
 
 # 5. Calculate Final Scores & Weights
+def get_raw_review(r_id, rev_id):
+    try:
+        review_idx = int(rev_id.rsplit("_", 1)[1])
+    except (IndexError, ValueError):
+        return {}
+
+    reviews = raw_data.get(r_id, {}).get("reviews", [])
+    if 0 <= review_idx < len(reviews):
+        return reviews[review_idx]
+    return {}
+
+
 restaurant_results = {}
 for r_id, info in restaurant_tracking.items():
-    final_scores = {
-        a: round(float(np.mean(scores)) if scores else 0, 3) 
-        for a, scores in info["aspect_scores"].items()
-    }
+    review_items = []
+    for rev_id, review_info in info["review_chunks"].items():
+        raw_review = get_raw_review(r_id, rev_id)
+        review_text = raw_review.get("content", "") if isinstance(raw_review, dict) else str(raw_review)
+        if not review_text:
+            review_text = " ".join(sentence["review"] for sentence in review_info["sentences"])
 
-    rec_score = round(
-        final_scores["맛"] * 0.4 +
-        final_scores["서비스"] * 0.2 +
-        final_scores["분위기"] * 0.15 +
-        final_scores["시스템"] * 0.15 +
-        final_scores["가격"] * 0.1,
-        3
-    )
+        review_aspect_scores = {
+            a: round(float(np.mean(scores)) if scores else 0, 3)
+            for a, scores in review_info["aspect_scores"].items()
+        }
+        review_items.append({
+            "rev_id": rev_id,
+            "review": review_text,
+            "aspect_scores": review_aspect_scores,
+            "metadata": raw_review if isinstance(raw_review, dict) else {},
+            "sentences": review_info["sentences"],
+        })
+
+    final_scores, weighted_reviews, review_weight_summary = aggregate_review_aspect_scores(review_items)
+    sentence_count = sum(len(review["sentences"]) for review in review_items)
 
     restaurant_results[r_id] = {
         "name": id_to_name.get(r_id, r_id),
-        "review_count": len(info["reviews"]),
+        "review_count": len(review_items),
+        "sentence_count": sentence_count,
         "aspect_scores": final_scores,
-        "rec_score": rec_score,
-        "reviews": info["reviews"]
+        "review_weights_applied": True,
+        "review_weight_summary": review_weight_summary,
+        "reviews": weighted_reviews,
     }
 
 
-sorted_results = dict(sorted(restaurant_results.items(), key=lambda x: x[1]["rec_score"], reverse=True))
+sorted_results = aggregate_restaurant_scores(restaurant_results, raw_data)
 
 with open(INTERIM/"absa_scores.json", "w", encoding="utf-8") as f:
     json.dump(sorted_results, f, ensure_ascii=False, indent=2)
+save_scores(sorted_results, DATA_DIR / "final" / "restaurant_scores.json")
+save_category_rankings(
+    build_category_rankings(sorted_results),
+    DATA_DIR / "final" / "category_rankings.json",
+)
 
 print("\n===== TOP 10 Restaurants =====\n")
 for idx, (rid, info) in enumerate(list(sorted_results.items())[:10]):

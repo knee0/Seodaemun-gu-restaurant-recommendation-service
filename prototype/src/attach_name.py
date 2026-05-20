@@ -1,13 +1,9 @@
 import json
-from pathlib import Path
 from collections import defaultdict
+from prototype.utils.paths import DATA_DIR, RAW_DATA
 
-# Define input/output Path
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent.parent
-INPUT_PATH = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "B_aspect_scores.json"
-OUTPUT_PATH = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "C_with_names.json"
-RAW_PATH = PROJECT_ROOT / "data" / "raw" / "naver_reviews.json"
+INPUT = DATA_DIR / "aspect_scores.json"
+OUTPUT = DATA_DIR / "with_names.json"
 
 # Current data only has restaurant ID
 # Load names from raw for readable result
@@ -28,16 +24,16 @@ def attach_names(data, name_map):
 
 
 def main():
-    with open(INPUT_PATH, "r", encoding="utf-8") as f:
+    with open(INPUT, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    with open(RAW_PATH, "r", encoding="utf-8") as f:
+    with open(RAW_DATA, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
     name_map = load_restaurant_names(raw)
     data = attach_names(data, name_map)
 
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+    with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":

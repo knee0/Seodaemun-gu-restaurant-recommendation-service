@@ -1,14 +1,11 @@
 from collections import Counter
-from pathlib import Path
 import json
 import re
 import math
+from prototype.utils.paths import DATA_DIR
 
-# Define input/output path
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent.parent
-INPUT_PATH =  PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "A_tokenized.json"
-OUTPUT_PATH = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "B_aspect_scores.json"
+INPUT = DATA_DIR / "tokenized.json"
+OUTPUT = DATA_DIR / "aspect_scores.json"
 
 # Mapping made from common Naver tag & common words
 # Helper code: experiments/find_aspect.py, experiments/common_words.py
@@ -39,7 +36,6 @@ WEIGHTS = {
     "Amount": 0.2,
     "Price": 0.2
 }
-
 
 def score_per_aspect(data):
     results = {}
@@ -102,14 +98,13 @@ def score_per_aspect(data):
 
     return results
 
-
 def main():
-    with open(INPUT_PATH, "r", encoding="utf-8") as f:
+    with open(INPUT, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     aspect_scores = score_per_aspect(data)
 
-    with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
+    with open(OUTPUT, 'w', encoding='utf-8') as f:
         json.dump(aspect_scores, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":

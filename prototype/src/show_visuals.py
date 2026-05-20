@@ -1,21 +1,19 @@
 import json
-from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter
+from prototype.utils.paths import DATA_DIR
 
 # Korean character breaks on default font
 plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
 
-# Define input path
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent.parent
-INPUT_PATH = PROJECT_ROOT / "data" / "interim" / "absa_prototype" / "C_with_names.json"
+
+INPUT = DATA_DIR / "with_names.json"
 
 # Plot scores of top_n restaurant for each aspect
 def plot_top_restaurants(top_n, aspect):
-    with open(INPUT_PATH, "r", encoding="utf-8") as f:
+    with open(INPUT, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     sorted_data = sorted(
@@ -37,7 +35,7 @@ def plot_top_restaurants(top_n, aspect):
 
 # Show scores of each aspect in radar chart
 def plot_radar(restaurant_id):
-    with open(INPUT_PATH, "r", encoding="utf-8") as f:
+    with open(INPUT, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     res = data[restaurant_id]
@@ -69,7 +67,7 @@ def plot_radar(restaurant_id):
 
 # Giving top restaurant to plot_radar
 def plot_top_radar():
-    with open(INPUT_PATH, "r", encoding="utf-8") as f:
+    with open(INPUT, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # Find restaurant with highest total score

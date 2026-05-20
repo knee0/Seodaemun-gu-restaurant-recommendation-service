@@ -1,10 +1,9 @@
 import json
-from src.utils.paths import INTERIM
+from src.utils import INTERIM, load_json
 import random
 
-# Load your engine's output
-with open(INTERIM / "aspect_scores.json", "r", encoding="utf-8") as f:
-    results = json.load(f)
+INPUT = INTERIM / "aspect_scores.json"
+results = load_json(INPUT)
 
 total_reviews = len(results)
 valid_count = 0
@@ -55,7 +54,7 @@ print(f"Reviews with Aspect/Sentiment: {valid_count} ({valid_count/total_reviews
 print(f"All-Null Ghost Reviews: {all_null_count} ({all_null_count/total_reviews*100:.1f}%)")
 print("-" * 40)
 
-
+print("=== DETAILED ASPECT STATISTICS ===")
 if valid_count > 0:
     # Sort aspects by mention count (highest first)
     sorted_aspects = sorted(aspect_counts.items(), key=lambda x: x[1], reverse=True)
@@ -69,6 +68,22 @@ if valid_count > 0:
         print(f"[{aspect}] Mentions: {count} ({freq_pct:.1f}% of valid) | Avg Score: {avg_score:.4f}")
 else:
     print("No valid aspect data found to generate detailed statistics.")
+
+print("\n=== INVESTIGATING GHOST SAMPLES ===")
+
+# Force filter exactly what is failing
+ghost_samples = []
+for rev in results:
+    if all(v is None for v in rev["aspect_score"].values()):
+        ghost_samples.append(rev)
+
+if not ghost_samples:
+    print("Check if aspect_scores.json was overwritten properly")
+else:
+    sample_size = min(20, len(ghost_samples))
+    random_ghosts = random.sample(ghost_samples, sample_size)
+    for idx, g in enumerate(random_ghosts):
+        print(f"[{idx+1}] Raw Text: {g['raw']}")
 
 
 print("\n=== INVESTIGATING COMPLEX SAMPLES (MULTIPLE ASPECTS) ===")
@@ -93,4 +108,3 @@ else:
         
         print(f"[{idx+1}] [Aspect Count: {c['count']}] Aspects: {aspects_str}")
         print(f"    Raw Text: {c['raw']}")
-        print()

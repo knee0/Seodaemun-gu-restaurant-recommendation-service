@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from tqdm import tqdm
-from src.utils.paths import INTERIM, MODELS
+from src.utils import INTERIM, MODELS, load_json
 import numpy as np
 from datasets import Dataset, ClassLabel
 from sklearn.model_selection import train_test_split
@@ -14,6 +14,7 @@ print(torch.cuda.is_available())
 
 # Data prep
 MODEL_NAME = "monologg/koelectra-base-v3-discriminator"
+INPUT = INTERIM = / "aspect_scores.json"
 ASPECTS = ["맛", "서비스", "분위기", "가격", "시스템"]
 LABEL_MAP = {0: "Negative", 1: "Positive"}
 
@@ -103,8 +104,7 @@ def train_model(raw_data):
 
 
 def main():
-    with open(INTERIM / "aspect_scores.json", "r", encoding="utf-8") as f:
-        raw_data = json.load(f)
+    raw_data = load_json(INPUT)
     train_model(raw_data)
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from bertopic.representation import KeyBERTInspired
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
-from src.utils.paths import DATA_DIR
+from src.utils import DATA_DIR, load_json
 from umap import UMAP
 from hdbscan import HDBSCAN
 
@@ -13,8 +13,7 @@ INPUT = DATA_DIR / "interim" / "step1_preprocessed.json"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 embedding_model = SentenceTransformer("jhgan/ko-sroberta-multitask", device=device)
 
-with open(INPUT, "r", encoding="utf-8") as f:
-    data = json.load(f)
+data = load_json(INPUT)
 
 stopwords = ["추천", "최고", "방문", "오늘", "리뷰", "생각", "사람", "진짜", "정말",
              "완전", "처음", "정도", "때문", "사용", "이용", "사진", "메뉴", "음식",

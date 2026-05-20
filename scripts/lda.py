@@ -3,12 +3,10 @@ import numpy as np
 from gensim import corpora
 from gensim.models import LdaModel, Phrases
 from gensim.models.phrases import Phraser
-from src.utils.paths import DATA_DIR
+from src.utils import INTERIM, load_json
 
-INPUT = DATA_DIR / "interim" / "step1_preprocessed.json"
-
-with open(INPUT, "r", encoding="utf-8") as f:
-    data = json.load(f)
+INPUT = INTERIM / "preprocessed.json"
+data = load_json(INPUT)
 
 stopwords = {"추천", "최고", "방문", "오늘", "리뷰", "생각", "사람", "진짜", "정말",
              "완전", "처음", "정도", "때문", "사용", "이용", "사진", "메뉴", "신촌",

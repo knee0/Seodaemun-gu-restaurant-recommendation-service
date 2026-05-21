@@ -1,0 +1,138 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+
+function renderStars(rating) {
+  const fullStars = "★".repeat(Math.floor(rating));
+  const emptyStars = "☆".repeat(5 - Math.floor(rating));
+  return fullStars + emptyStars;
+}
+
+function DetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [restaurant, setRestaurant] = useState(null);
+
+  useEffect(() => {
+    fetch("/data/web_mock_restaurants.json")
+      .then((response) => response.json())
+      .then((data) => {
+        const found = data.find((item) => item.id === id);
+        setRestaurant(found || null);
+      })
+      .catch((error) => {
+        console.error("상세 데이터를 불러오는 데 실패했습니다:", error);
+      });
+  }, [id]);
+
+  if (!restaurant) {
+    return (
+      <div className="detail-page">
+        <div className="detail-container">
+          <button className="detail-back-button" onClick={() => navigate(-1)}>
+            ← 뒤로가기
+          </button>
+          <p>식당 정보를 찾을 수 없습니다.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="detail-page">
+      <div className="detail-container">
+        <button className="detail-back-button" onClick={() => navigate(-1)}>
+          ← 뒤로가기
+        </button>
+
+        <div className="detail-image-placeholder">대표 이미지</div>
+
+        <div className="detail-header">
+          <div>
+            <h1>{restaurant.name}</h1>
+            <p className="detail-description">{restaurant.description}</p>
+          </div>
+          <span className="category-badge">{restaurant.category}</span>
+        </div>
+
+        <div className="detail-rating-summary">
+          <span className="detail-stars">{renderStars(restaurant.total_score)}</span>
+          <span className="detail-total-score">{restaurant.total_score}</span>
+          <span className="detail-review-count">({restaurant.review_count}개 리뷰)</span>
+        </div>
+
+        <section className="detail-section">
+          <h2>카테고리별 평점</h2>
+          <div className="detail-score-list">
+            <div className="detail-score-row">
+              <span className="detail-score-label">맛</span>
+              <span className="detail-score-value">{restaurant.scores.taste}</span>
+            </div>
+            <div className="detail-score-row">
+              <span className="detail-score-label">분위기</span>
+              <span className="detail-score-value">{restaurant.scores.mood}</span>
+            </div>
+            <div className="detail-score-row">
+              <span className="detail-score-label">가격</span>
+              <span className="detail-score-value">{restaurant.scores.price}</span>
+            </div>
+            <div className="detail-score-row">
+              <span className="detail-score-label">서비스</span>
+              <span className="detail-score-value">{restaurant.scores.service}</span>
+            </div>
+            <div className="detail-score-row">
+              <span className="detail-score-label">시스템</span>
+              <span className="detail-score-value">{restaurant.scores.system}</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="detail-section">
+          <h2>상세 정보</h2>
+          <div className="detail-info-list">
+            <p>📞 {restaurant.phone || "전화번호 없음"}</p>
+            <p>📍 {restaurant.address || "주소 정보 없음"}</p>
+          </div>
+
+          <div className="detail-map-buttons">
+            <a
+              href={restaurant.naver_map_url || "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="naver-map-button"
+            >
+              네이버 지도로 보기
+            </a>
+
+            <a
+              href={restaurant.kakao_map_url || "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="kakao-map-button"
+            >
+              카카오맵으로 보기
+            </a>
+          </div>
+        </section>
+
+        <section className="detail-section">
+          <h2>대표 리뷰</h2>
+
+          <div className="review-list">
+            {(restaurant.reviews || []).map((review, index) => (
+              <div key={index} className="review-card">
+                <div className="review-header">
+                  <strong>{review.author}</strong>
+                  <span>{renderStars(review.rating)}</span>
+                  <span>{review.date}</span>
+                </div>
+                <p>{review.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+export default DetailPage;

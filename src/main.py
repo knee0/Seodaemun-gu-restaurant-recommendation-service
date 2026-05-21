@@ -1,0 +1,1 @@
+# Pipeline for executing all scripts in /src

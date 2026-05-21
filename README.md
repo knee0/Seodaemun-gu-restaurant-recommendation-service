@@ -1,10 +1,18 @@
-# Basic GitHub commands ദ്ദി(◝ ⩊ ◜)
+# 서대문구 맛집 추천 서비스!
 
-#### Setup
+### 수집한 데이터는 레포에 공유하지 말아주세요!
+합법적으로 수집한 것이 아니라서, 나중에 레포를 public으로 전환하는데 차질이 생겨요.
+
+
+최신 commit에 리뷰 데이터가 있어서 제외하고 다시 올렸어요. 로컬 기록이랑 꼬이지 않도록 다음 코드 실행해주세요!
 ```
-git clone https://github.com/eastYonsei/test-mining-project.git
-cd test-mining-project
+git fetch origin
+git reset --hard origin/main
 ```
+이후로는 똑같이 'git pull --rebase' 하시면 됩니다. 해당 코드 실행하면 로컬 폴더가 웹의 최신 형태로 초기화되니, 로컬에서 수정한 사항 있으면 따로 저장해주세요!
+
+
+### Basic GitHub Commands
 
 #### Before working
 ```

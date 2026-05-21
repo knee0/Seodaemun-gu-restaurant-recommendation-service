@@ -17,10 +17,20 @@ config.yaml
 Thumbs.db
 
 # All scraped data
-data/raw/**
+*.json
+*.jsonl
+data/raw/*
 !data/raw/**/.gitkeep
-data/interim/**
+data/interim/*
 !data/interim/**/
 !data/interim/**/.gitkeep
-data/processed/**
+data/processed/*
 !data/processed/**/.gitkeep
+data/final/*
+!data/final/**/.gitkeep
+prototype/data/*
+!prototype/data/**/.gitkeep
+
+# No models
+models/*
+!models/**/.gitkeep

@@ -2,10 +2,14 @@ from pathlib import Path
 import json
 
 ROOT = Path(__file__).resolve().parent.parent
+
 DATA_DIR = ROOT / "data"
-MODELS = ROOT / "models"
 RAW_DATA = DATA_DIR / "raw" / "naver_reviews.json"
-INTERIM = DATA_DIR / "interim"
+PREP = DATA_DIR / "prep"
+LEXICON = DATA_DIR / "lexicon"
+SCORES = DATA_DIR / "scores"
+
+MODELS = ROOT / "models"
 
 def load_json(file_path):
     with open(file_path, "r", encoding="utf-8") as f:

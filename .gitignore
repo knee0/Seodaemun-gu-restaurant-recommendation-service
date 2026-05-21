@@ -34,3 +34,9 @@ prototype/data/*
 # No models
 models/*
 !models/**/.gitkeep
+
+# Products from .toml
+*.egg-info/
+.eggs/
+build/
+dist/

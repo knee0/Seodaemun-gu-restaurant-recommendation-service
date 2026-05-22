@@ -7,7 +7,9 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from statistics import mean
+from src.utils import DATA_DIR, INTERIM, RAW_DATA, load_json, save_json, FINAL
 
+<<<<<<< Updated upstream
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -53,19 +55,24 @@ ASPECT_ALIASES = {
 # 특정 aspect가 비어 있으면 실제 점수 계산 시 남은 aspect끼리 다시 정규화.
 
 # TODO : 나중에 유저가 조절할 수 있게 바꾸기.
+=======
+INPUT = INTERIM / "absa_scores.json"
+OUTPUT_MAIN = FINAL / "restaurant_scores.json"
+OUTPUT_CATE = FINAL / "category_rankings.json"
+
+# Default weights for each aspects
+# User changing aspects is managed on the front-end, not here
+>>>>>>> Stashed changes
 CUISINE_WEIGHTS = {
-    DEFAULT_CUISINE: {"맛": 0.40, "서비스": 0.18, "분위기": 0.15, "가격": 0.15, "시스템": 0.12},
     "한식": {"맛": 0.42, "가격": 0.18, "서비스": 0.15, "시스템": 0.13, "분위기": 0.12},
     "중식": {"맛": 0.45, "시스템": 0.17, "가격": 0.15, "서비스": 0.13, "분위기": 0.10},
     "일식": {"맛": 0.44, "시스템": 0.17, "서비스": 0.16, "가격": 0.13, "분위기": 0.10},
     "양식": {"맛": 0.38, "분위기": 0.22, "서비스": 0.17, "가격": 0.13, "시스템": 0.10},
     "카페/디저트": {"맛": 0.34, "분위기": 0.26, "서비스": 0.15, "가격": 0.13, "시스템": 0.12},
-    "분식/패스트푸드": {"맛": 0.35, "가격": 0.24, "시스템": 0.18, "서비스": 0.13, "분위기": 0.10},
     "분식/간편식": {"맛": 0.35, "가격": 0.24, "시스템": 0.18, "서비스": 0.13, "분위기": 0.10},
     "주점": {"맛": 0.32, "분위기": 0.24, "서비스": 0.18, "시스템": 0.14, "가격": 0.12},
     "술집/주점": {"맛": 0.32, "분위기": 0.24, "서비스": 0.18, "시스템": 0.14, "가격": 0.12},
     "아시안/세계요리": {"맛": 0.40, "분위기": 0.18, "서비스": 0.16, "가격": 0.13, "시스템": 0.13},
-    "세계요리": {"맛": 0.40, "분위기": 0.18, "서비스": 0.16, "가격": 0.13, "시스템": 0.13},
 }
 
 # 웹페이지에서 탭/섹션으로 보여줄 랭킹 카테고리 목록.
@@ -79,109 +86,7 @@ RANKING_CATEGORIES = [
     "카페/디저트",
     "술집/주점",
     "아시안/세계요리",
-    "세계요리",
 ]
-
-# 모델/키워드 추정 과정에서 생긴 내부 업종명을 실제 노출 카테고리명으로 맞추기.
-RANKING_CATEGORY_MAP = {
-    "한식": "한식",
-    "중식": "중식",
-    "일식": "일식",
-    "양식": "양식",
-    "아시안/세계요리": "아시안/세계요리",
-    "세계요리": "세계요리",
-    "분식/패스트푸드": "분식/간편식",
-    "분식/간편식": "분식/간편식",
-    "카페/디저트": "카페/디저트",
-    "주점": "술집/주점",
-    "술집/주점": "술집/주점",
-}
-
-# raw metadata.category가 없거나 비어 있을 때 식당명/카테고리 텍스트에서 업종을 추정하기 위한 키워드.
-CUISINE_KEYWORDS = {
-    "카페/디저트": [
-        "카페", "커피", "디저트", "베이커리", "빵", "케이크", "빙수", "베이글",
-        "도넛", "아이스크림", "브런치카페",
-    ],
-    "주점": [
-        "술집", "주점", "호프", "펍", "pub", "bar", "와인바", "맥주", "칵테일",
-        "칵테일바", "이자카야",
-    ],
-    "분식/패스트푸드": [
-        "분식", "간편식", "떡볶이", "김밥", "라면", "토스트", "샌드위치", "햄버거",
-        "버거", "치킨", "패스트푸드",
-    ],
-    "한식": [
-        "한식", "백반", "국밥", "찌개", "전골", "고기", "삼겹살", "보쌈",
-        "족발", "감자탕", "닭갈비", "칼국수", "수제비", "냉면", "갈비",
-        "곱창", "막창", "해장국",
-    ],
-    "중식": [
-        "중식", "중국", "중화", "짜장", "자장", "짬뽕", "탕수육", "마라",
-        "양꼬치", "딤섬", "도삭면", "훠궈", "소룡포",
-    ],
-    "일식": [
-        "일식", "일본", "초밥", "스시", "라멘", "라멘집", "돈까스", "돈가스",
-        "카레", "우동", "사시미", "횟집", "회전초밥", "덮밥", "규동", "오마카세",
-    ],
-    "양식": [
-        "양식", "파스타", "피자", "스테이크", "리조또", "이탈리아", "프렌치",
-        "프랑스", "멕시코", "타코", "퀘사디아", "샐러드", "브런치",
-    ],
-    "아시안/세계요리": [
-        "아시안", "세계요리", "쌀국수", "베트남", "태국", "타이", "인도",
-        "커리", "마라탕", "마라샹궈",
-    ],
-}
-
-# 결과 JSON에 남겨 발표에서 "왜 이 업종은 이 가중치인가"를 설명할 때 사용.
-WEIGHT_REASONS = {
-    DEFAULT_CUISINE: "업종을 특정하기 어려워 맛을 중심으로 서비스, 분위기, 가격, 시스템을 균형 반영",
-    "한식": "일상 식사 비중이 커 맛과 가성비를 높게 보고, 회전/대기 같은 시스템을 보조 반영",
-    "중식": "메뉴 맛과 조리 일관성이 핵심이고, 배달/회전/대기 경험이 만족도에 크게 작용",
-    "일식": "맛과 신선도, 제공 순서/대기/좌석 같은 운영 안정성이 선택 기준에 중요",
-    "양식": "데이트와 모임 수요가 많아 맛 다음으로 분위기와 서비스 경험의 비중을 확대",
-    "카페/디저트": "음료/디저트 품질과 함께 체류 분위기가 방문 목적에 직접 연결",
-    "분식/패스트푸드": "가성비와 빠른 제공/회전이 만족도에 크게 영향을 주는 업종",
-    "분식/간편식": "가성비와 빠른 제공/회전이 만족도에 크게 영향을 주는 업종",
-    "주점": "음식뿐 아니라 분위기, 응대, 좌석/대기 같은 이용 경험이 재방문에 중요",
-    "술집/주점": "음식뿐 아니라 분위기, 응대, 좌석/대기 같은 이용 경험이 재방문에 중요",
-    "아시안/세계요리": "이색 메뉴의 맛과 함께 동행/모임 경험을 좌우하는 분위기와 서비스도 반영",
-    "세계요리": "이색 메뉴의 맛과 함께 동행/모임 경험을 좌우하는 분위기와 서비스도 반영",
-}
-
-# 크롤러 버전이나 데이터 소스마다 키 이름이 조금씩 달라질 수 있어 후보 키를 여러 개 두기.
-VISITOR_REVIEW_KEYS = [
-    "visitor_review_count", "visitor_reviews", "visitorReviewCount", "visitorReview",
-    "방문자 리뷰 수", "방문자리뷰", "방문자 리뷰",
-]
-BLOG_REVIEW_KEYS = [
-    "blog_review_count", "blog_reviews", "blogReviewCount", "blogReview",
-    "블로그 리뷰 수", "블로그리뷰", "블로그 리뷰",
-]
-RATING_KEYS = [
-    "rating", "star_rating", "starRating", "naver_rating", "naverRating",
-    "별점", "평점",
-]
-REVIEW_DATE_KEYS = [
-    "date", "created_at", "createdAt", "created", "write_date", "writeDate",
-    "written_at", "writtenAt", "visited_at", "visitedAt", "visit_datetime",
-    "visitDatetime", "visit_date", "visitDate", "review_date", "reviewDate",
-    "작성일", "방문일", "리뷰 작성일",
-]
-REVIEWER_REVIEW_COUNT_KEYS = [
-    "review_count", "reviewCount",
-    "author_review_count", "authorReviewCount", "reviewer_review_count",
-    "reviewerReviewCount", "user_review_count", "userReviewCount",
-    "writer_review_count", "writerReviewCount", "author.reviews",
-    "author.review_count", "user.reviews", "user.review_count",
-    "작성자 리뷰 수", "리뷰어 리뷰 수", "작성한 리뷰", "리뷰 수",
-]
-CATEGORY_KEYS = [
-    "category", "category_name", "categoryName", "business_category",
-    "업종", "카테고리", "분류",
-]
-NAME_KEYS = ["name", "restaurant_name", "place_name", "상호명", "가게명"]
 
 # 최종 추천 점수는 감정 점수를 가장 크게 보고, 인기도/별점은 보조 신호로만 반영.
 SENTIMENT_WEIGHT = 0.78
@@ -197,25 +102,6 @@ MAX_REVIEWER_ACTIVITY_BOOST = 0.25
 REVIEWER_ACTIVITY_CAP = 100
 MIN_REVIEW_WEIGHT = 0.45
 MAX_REVIEW_WEIGHT = 1.45
-
-
-def load_json(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def save_scores(scores, output_path=None):
-    output_path = Path(output_path or DATA_DIR / "final" / "restaurant_scores.json")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(scores, f, ensure_ascii=False, indent=2)
-
-
-def save_category_rankings(rankings, output_path=None):
-    output_path = Path(output_path or DATA_DIR / "final" / "category_rankings.json")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(rankings, f, ensure_ascii=False, indent=2)
 
 
 def _normalize_key(key):
@@ -237,8 +123,7 @@ def _metadata(raw_restaurant):
 
 def _flatten_items(data, prefix=""):
     # author.review_count 같은 중첩 키도 _first_value에서 찾을 수 있도록 펼치고,
-    if not isinstance(data, dict):
-        return
+    if not isinstance(data, dict): return
 
     for key, value in data.items():
         full_key = f"{prefix}.{key}" if prefix else str(key)
@@ -249,8 +134,7 @@ def _flatten_items(data, prefix=""):
 
 def _first_value(data, keys):
     # 후보 키 목록 중 데이터에 실제 존재하는 첫 값을 찾아 반환.
-    if not isinstance(data, dict):
-        return None
+    if not isinstance(data, dict): return None
 
     lookup = {_normalize_key(k): v for k, v in _flatten_items(data)}
     for key in keys:
@@ -278,12 +162,14 @@ def _parse_reference_date(value=None):
 
 
 def _stringify(value):
-    if value is None:
-        return ""
+    if value is None: return ""
+    
     if isinstance(value, (list, tuple, set)):
         return " ".join(_stringify(v) for v in value)
+    
     if isinstance(value, dict):
         return " ".join(_stringify(v) for v in value.values())
+
     return str(value)
 
 
@@ -305,7 +191,6 @@ def _extract_count(value):
 
     match = re.search(r"\d+(?:\.\d+)?", text)
     return int(float(match.group(0))) if match else None
-
 
 def _extract_rating(value):
     # 별점은 0~1 범위로 정규화해서 최종 점수 계산에 섞기 쉽게 만들기.
@@ -375,9 +260,8 @@ def _extract_date(value, reference_date=None):
     except ValueError:
         return None
 
-
+# 오래된 리뷰의 영향력을 반감기 방식으로 완만하게 낮춤.
 def _recency_weight(review_date, reference_date=None):
-    # 오래된 리뷰의 영향력을 급격히 0으로 만들지 않고 반감기 방식으로 완만하게 낮춤.
     if review_date is None:
         return 1.0
 
@@ -386,12 +270,10 @@ def _recency_weight(review_date, reference_date=None):
     decay = math.exp(-age_days / RECENCY_HALF_LIFE_DAYS)
     return MIN_RECENCY_WEIGHT + (1 - MIN_RECENCY_WEIGHT) * decay
 
-
+# 리뷰를 많이 쓴 작성자는 약간 더 신뢰하되, 로그 스케일과 상한으로 과한 영향력을 막음.
 def _reviewer_activity_weight(review_count):
-    # 리뷰를 많이 쓴 작성자는 약간 더 신뢰하되, 로그 스케일과 상한으로 과한 영향력을 막음.
-    if review_count is None or review_count <= 0:
-        return 1.0
-
+    if review_count is None or review_count <= 0: return 1.0
+    
     activity = min(math.log1p(review_count) / math.log1p(REVIEWER_ACTIVITY_CAP), 1.0)
     return 1.0 + MAX_REVIEWER_ACTIVITY_BOOST * activity
 
@@ -852,6 +734,7 @@ def _resolve_input_path(input_arg):
 
 
 def main():
+<<<<<<< Updated upstream
     # aspect_scores/absa_scores를 읽어 최종 점수 파일과 카테고리별 랭킹 파일 만들기.
     # 터미널 실행 예시:
     # python aggregate.py --input "aspect_scores.json이 있는 경로" --raw "naver_reviews.json이 있는 경로" --output "..\data\final\restaurant_scores.json" --category-output "..\data\final\category_rankings.json" --reference-date 2026-05-21
@@ -873,10 +756,15 @@ def main():
     parser.add_argument("--raw", default=str(RAW_DATA))
     parser.add_argument("--output", default=str(DATA_DIR / "final" / "restaurant_scores.json"))
     parser.add_argument("--category-output", default=str(DATA_DIR / "final" / "category_rankings.json"))
+=======
+    # CLI 실행 진입점: aspect_scores/absa_scores를 읽어 최종 점수 파일과 카테고리별 랭킹 파일 만들기.
+    parser = argparse.ArgumentParser(description="Aggregate restaurant ABSA scores into final recommendation scores.")
+>>>>>>> Stashed changes
     parser.add_argument("--category-top-n", type=int, default=None)
     parser.add_argument("--reference-date", default=None)
     args = parser.parse_args()
 
+<<<<<<< Updated upstream
     try:
         input_path = _resolve_input_path(args.input)
     except FileNotFoundError as exc:
@@ -888,6 +776,10 @@ def main():
     if not raw_data:
         print(f"[경고] 리뷰 메타데이터 파일을 찾지 못했습니다: {raw_path}")
         print("[경고] 리뷰 최신성/작성자 활동량/네이버 카테고리 기반 보정이 제한됩니다.")
+=======
+    input_data = load_json(INPUT)
+    raw_data = load_json(RAW_DATA)
+>>>>>>> Stashed changes
     if isinstance(input_data, list):
         # 리스트 입력은 문장/절 단위 결과(aspect_scores.json)로 보고 식당 단위로 먼저 묶고,
         restaurant_results = build_restaurant_results_from_aspect_rows(
@@ -900,11 +792,11 @@ def main():
         restaurant_results = input_data
 
     scores = aggregate_restaurant_scores(restaurant_results, raw_data, args.reference_date)
-    save_scores(scores, args.output)
+    save_json(scores, OUTPUT_MAIN, 2)
 
     # 웹페이지에서 탭별 목록을 바로 그릴 수 있도록 카테고리별 랭킹도 별도 파일로 저장.
     category_rankings = build_category_rankings(scores, args.category_top_n)
-    save_category_rankings(category_rankings, args.category_output)
+    save_json(category_rankings, OUTPUT_CATE, 2)
 
     print(f"Saved {len(scores)} restaurant scores to {args.output}")
     print(f"Saved category rankings to {args.category_output}")

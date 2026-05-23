@@ -66,12 +66,21 @@ def score_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
         
             break
 
-    final_scores = {
-        aspect: round(np.mean(aspect_scores[aspect]), 4) if aspect_scores[aspect] else None
-        for aspect in aspect_lexicon.keys()
-    }
+    sentiment_vector = [-1] * 8
+    for k, aspect in enumerate(aspect_lexicon.keys()):
+        pos_idx = 2 * k
+        neg_idx = (2 * k) + 1
+        if not aspect_scores[aspect]: continue
+        mean_score = round(np.mean(aspect_scores[aspect]), 4)
 
-    return final_scores
+        if mean_score >= 0:
+            sentiment_vector[pos_idx] = mean_score
+            sentiment_vector[neg_idx] = 0.0
+        elif mean_score < 0:
+            sentiment_vector[pos_idx] = 0.0
+            sentiment_vector[neg_idx] = -mean_score
+
+    return sentiment_vector
 
 
 def run_absa():
@@ -94,13 +103,13 @@ def run_absa():
     for rev in reviews:
         tokens = rev["tokens"]
         words = [token.partition('/')[0] for token in tokens]
-        aspect_score = score_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon, find_aspect)
+        sentiment_vector = score_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon, find_aspect)
 
         final_results.append({
             "rev_id": rev["rev_id"],
             "raw": rev["raw"],
             "tokens": tokens,
-            "aspect_score": aspect_score,
+            "sentiment_vector": sentiment_vector,
         })
 
     save_json(final_results, OUTPUT, 4)

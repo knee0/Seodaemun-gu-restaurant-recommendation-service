@@ -2,67 +2,18 @@ import argparse
 import json
 import math
 import re
-import sys
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from statistics import mean
 from src.utils import DATA_DIR, INTERIM, RAW_DATA, load_json, save_json, FINAL
 
-<<<<<<< Updated upstream
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.utils import DATA_DIR, INTERIM, RAW_DATA
-
-
-# BERT/사전 기반 점수가 섞여 들어올 수 있으므로 최종 집계에서 사용할 표준 카테고리명으로 맞춰주기.
-CANONICAL_ASPECTS = ["맛", "서비스", "분위기", "가격", "시스템"]
-DEFAULT_CUISINE = "기타"
-
-# 이전 prototype의 영문 aspect명이나 유사 표현을 현재 프로젝트의 한글 aspect명으로 통일.
-ASPECT_ALIASES = {
-    "맛": "맛",
-    "Taste": "맛",
-    "taste": "맛",
-    "서비스": "서비스",
-    "Service": "서비스",
-    "service": "서비스",
-    "분위기": "분위기",
-    "Mood": "분위기",
-    "Atmosphere": "분위기",
-    "mood": "분위기",
-    "atmosphere": "분위기",
-    "가격": "가격",
-    "Price": "가격",
-    "Value": "가격",
-    "Amount": "가격",
-    "price": "가격",
-    "value": "가격",
-    "amount": "가격",
-    "양": "가격",
-    "가성비": "가격",
-    "시스템": "시스템",
-    "System": "시스템",
-    "system": "시스템",
-    "편의": "시스템",
-    "대기": "시스템",
-}
-
-# 업종별 가중치는 학습값이 아니라 느낌있게(?) 주기. 나중에 유저가 조정할 수 있게 수정해볼게요!
-# 예: 카페는 분위기, 분식은 가격/회전, 주점은 분위기/서비스 비중을 조금 더 주기.
-# 특정 aspect가 비어 있으면 실제 점수 계산 시 남은 aspect끼리 다시 정규화.
-
-# TODO : 나중에 유저가 조절할 수 있게 바꾸기.
-=======
 INPUT = INTERIM / "absa_scores.json"
 OUTPUT_MAIN = FINAL / "restaurant_scores.json"
 OUTPUT_CATE = FINAL / "category_rankings.json"
 
 # Default weights for each aspects
 # User changing aspects is managed on the front-end, not here
->>>>>>> Stashed changes
 CUISINE_WEIGHTS = {
     "한식": {"맛": 0.42, "가격": 0.18, "서비스": 0.15, "시스템": 0.13, "분위기": 0.12},
     "중식": {"맛": 0.45, "시스템": 0.17, "가격": 0.15, "서비스": 0.13, "분위기": 0.10},
@@ -711,75 +662,15 @@ def aggregate_restaurant_scores(restaurant_results, raw_data=None, reference_dat
     return ranked
 
 
-def _resolve_input_path(input_arg):
-    # 기본값은 BERT 추론 결과(absa_scores.json)를 먼저 보되,
-    # 사전 기반 결과(aspect_scores.json)만 있는 경우도 바로 실행되도록 보완.
-    input_path = Path(input_arg)
-    if input_path.exists():
-        return input_path
-
-    default_absa_path = INTERIM / "absa_scores.json"
-    fallback_aspect_path = INTERIM / "aspect_scores.json"
-    if input_path == default_absa_path and fallback_aspect_path.exists():
-        return fallback_aspect_path
-
-    message = (
-        f"입력 점수 파일을 찾을 수 없습니다: {input_path}\n"
-        "프로젝트 data/interim 폴더에 absa_scores.json 또는 aspect_scores.json을 두거나,\n"
-        "다음처럼 --input 옵션으로 점수 파일 경로를 직접 지정해 주세요.\n"
-        '예: python aggregate.py --input "C:\\path\\to\\aspect_scores.json" '
-        '--raw "C:\\path\\to\\naver_reviews.json"'
-    )
-    raise FileNotFoundError(message)
-
-
 def main():
-<<<<<<< Updated upstream
-    # aspect_scores/absa_scores를 읽어 최종 점수 파일과 카테고리별 랭킹 파일 만들기.
-    # 터미널 실행 예시:
-    # python aggregate.py --input "aspect_scores.json이 있는 경로" --raw "naver_reviews.json이 있는 경로" --output "..\data\final\restaurant_scores.json" --category-output "..\data\final\category_rankings.json" --reference-date 2026-05-21
-    # reference-date는 실행하는 날 기준 오늘 날짜를 YYYY-MM-DD 형식으로 넣으면 됩니다!
-    parser = argparse.ArgumentParser(
-        description="Aggregate restaurant ABSA scores into final recommendation scores.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=(
-            "실행 예시:\n"
-            '  python aggregate.py --input "aspect_scores.json이 있는 경로" '
-            '--raw "naver_reviews.json이 있는 경로" '
-            '--output "..\\data\\final\\restaurant_scores.json" '
-            '--category-output "..\\data\\final\\category_rankings.json" '
-            "--reference-date 2026-05-21\n\n"
-            "reference-date는 실행하는 날 기준 오늘 날짜를 YYYY-MM-DD 형식으로 넣으면 됩니다!"
-        ),
-    )
-    parser.add_argument("--input", default=str(INTERIM / "absa_scores.json"))
-    parser.add_argument("--raw", default=str(RAW_DATA))
-    parser.add_argument("--output", default=str(DATA_DIR / "final" / "restaurant_scores.json"))
-    parser.add_argument("--category-output", default=str(DATA_DIR / "final" / "category_rankings.json"))
-=======
     # CLI 실행 진입점: aspect_scores/absa_scores를 읽어 최종 점수 파일과 카테고리별 랭킹 파일 만들기.
     parser = argparse.ArgumentParser(description="Aggregate restaurant ABSA scores into final recommendation scores.")
->>>>>>> Stashed changes
     parser.add_argument("--category-top-n", type=int, default=None)
     parser.add_argument("--reference-date", default=None)
     args = parser.parse_args()
 
-<<<<<<< Updated upstream
-    try:
-        input_path = _resolve_input_path(args.input)
-    except FileNotFoundError as exc:
-        raise SystemExit(str(exc)) from exc
-
-    raw_path = Path(args.raw)
-    input_data = load_json(input_path)
-    raw_data = load_json(raw_path) if raw_path.exists() else {}
-    if not raw_data:
-        print(f"[경고] 리뷰 메타데이터 파일을 찾지 못했습니다: {raw_path}")
-        print("[경고] 리뷰 최신성/작성자 활동량/네이버 카테고리 기반 보정이 제한됩니다.")
-=======
     input_data = load_json(INPUT)
     raw_data = load_json(RAW_DATA)
->>>>>>> Stashed changes
     if isinstance(input_data, list):
         # 리스트 입력은 문장/절 단위 결과(aspect_scores.json)로 보고 식당 단위로 먼저 묶고,
         restaurant_results = build_restaurant_results_from_aspect_rows(

@@ -16,7 +16,7 @@ def get_seed_clues(data):
     for rev in data:
         for t in rev.get('tokens', []):       
             word, tag = t.split('/')
-            if len(word) < 2: continue
+            #if len(word) < 2: continue
 
             # Group by POS tag
             if tag in target1:
@@ -26,7 +26,7 @@ def get_seed_clues(data):
             elif tag == target3:
                 adj_counts[word] += 1
 
-    return noun_counts.most_common(50), nnp_counts.most_common(50), adj_counts.most_common(50)
+    return noun_counts.most_common(100), nnp_counts.most_common(100), adj_counts.most_common(100)
 
 
 def main():

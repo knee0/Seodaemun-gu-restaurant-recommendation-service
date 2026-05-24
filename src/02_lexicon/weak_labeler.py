@@ -12,12 +12,11 @@ OUTPUT = SCORES / "lexicon_scores.json"
 # FALLBACK_ASPECT_KEYWORDS = {}
 # FALLBACK_SENTIMENT_SCORES = {}
 
-# '별로'는 감정 단어에 있어서 제거했습니다.
-NEGATION_WORDS = {"안", "못", "않"}
+# NEGATION_WORDS = {"안", "못", "않"}
 DEFAULT_WINDOW_SIZE = 3
 
 # 감정 단어의 점수를 가장 가까운 속성에 부여: 각 절마다 속성별 점수 매기기.
-def score_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
+def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
                            find_aspect, window_size=DEFAULT_WINDOW_SIZE):
 
     # defaultdist는 일반 dict와 같지만, 없는 key를 자동으로 생성해주어 편리합니다.
@@ -38,9 +37,9 @@ def score_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
         score = sentiment_lexicon[word]
 
         # NEGATION을 관리한다면, 단어 뒤로 오는 부정문도 고려해야 겠네요.
-        prev_words = words[max(0, idx-2) : idx]
-        if any(word in NEGATION_WORDS for word in prev_words):
-            score = -score
+        #prev_words = words[max(0, idx-2) : idx]
+        #if any(word in NEGATION_WORDS for word in prev_words):
+        #    score = -score
 
         # 감정 단어가 속성 사전에도 있으면, 해당 속성에 바로 연결.
         if word in find_aspect:
@@ -66,21 +65,17 @@ def score_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
         
             break
 
-    sentiment_vector = [-1] * 8
-    for k, aspect in enumerate(aspect_lexicon.keys()):
-        pos_idx = 2 * k
-        neg_idx = (2 * k) + 1
+    aspect_sentiment = []
+    for aspect in aspect_lexicon.keys():
         if not aspect_scores[aspect]: continue
         mean_score = round(np.mean(aspect_scores[aspect]), 4)
 
-        if mean_score >= 0:
-            sentiment_vector[pos_idx] = mean_score
-            sentiment_vector[neg_idx] = 0.0
-        elif mean_score < 0:
-            sentiment_vector[pos_idx] = 0.0
-            sentiment_vector[neg_idx] = -mean_score
+        if mean_score >= 0.5:
+            aspect_sentiment.append(f"{aspect}_긍정")
+        elif mean_score <= -0.5:
+            aspect_sentiment.append(f"{aspect}_부정")
 
-    return sentiment_vector
+    return aspect_sentiment
 
 
 def run_absa():
@@ -103,16 +98,16 @@ def run_absa():
     for rev in reviews:
         tokens = rev["tokens"]
         words = [token.partition('/')[0] for token in tokens]
-        sentiment_vector = score_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon, find_aspect)
+        aspect_sentiment = find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon, find_aspect)
 
         final_results.append({
             "rev_id": rev["rev_id"],
             "raw": rev["raw"],
             "tokens": tokens,
-            "sentiment_vector": sentiment_vector,
+            "labels": aspect_sentiment,
         })
 
-    save_json(final_results, OUTPUT, 4)
+    save_json(final_results, OUTPUT)
 
 if __name__ == "__main__":
     run_absa()

@@ -1,111 +1,133 @@
 import json
 import pandas as pd
-from tqdm import tqdm
-from src.utils import INTERIM, MODELS, load_json
 import numpy as np
-from datasets import Dataset, ClassLabel
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
-from collections import defaultdict
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer, DataCollatorWithPadding
+from src.utils import MODELS, DATASET, load_json
+from datasets import Dataset
+from sklearn.metrics import accuracy_score, f1_score
+from transformers import (
+    AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer, DataCollatorWithPadding, EvalPrediction
+)
 
 print(torch.cuda.is_available())
 
 # Data prep
-MODEL_NAME = "monologg/koelectra-base-v3-discriminator"
-INPUT = INTERIM = / "aspect_scores.json"
-ASPECTS = ["맛", "서비스", "분위기", "가격", "시스템"]
-LABEL_MAP = {0: "Negative", 1: "Positive"}
-
+MODEL_NAME = "beomi/KcELECTRA-base-v2022"
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+TRAIN = DATASET / "train_data.json"
+VALIDATE = DATASET / "golden_val_final.json"
+RESULT = MODELS / "./results"
+MODEL = MODELS / "./models"
+
+ASPECT_LABELS = ['맛_긍정', '맛_부정', '서비스_긍정', '서비스_부정', '분위기_긍정', '분위기_부정', '가격_긍정', '가격_부정']
+NUM_LABELS = len(ASPECT_LABELS)
+LABEL_TO_ID = {}
+ID_TO_LABEL = {}
+for idx, label in enumerate(ASPECT_LABELS):
+    LABEL_TO_ID[label] = idx
+    ID_TO_LABEL[idx] = label
+
+
+def multi_label_vector(raw_data):
+    processed = []
+    for item in raw_data:
+        text = item.get("raw", "")
+        labels = item.get("labels", [])
+
+        label_vector = [0.0] * NUM_LABELS
+        for label in labels:
+            label_vector[LABEL_TO_ID[label]] = 1.0
+
+        processed.append({"text": text, "labels": label_vector})
+
+    return pd.DataFrame(processed)
+
 
 def tokenize_and_format(batch):
-    tokenized = tokenizer(text=batch["text"], text_pair=batch["aspect"], truncation=True, 
-                          padding=False, max_length=128)
-    tokenized["label"] = batch["label"]
+    tokenized = tokenizer(batch["text"], truncation=True, padding=False, max_length=128)
+    tokenized["labels"] = batch["labels"]
     return tokenized
 
-def compute_metrics(eval_pred):
-    logits, labels = eval_pred
-    preds = np.argmax(logits, axis=1)
+def compute_metrics(p: EvalPrediction):
+    logits = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
+    labels = p.label_ids
 
-    acc = accuracy_score(labels, preds)
-    macro_f1 = f1_score(labels, preds, average="macro")
+    sigmoid = lambda x: 1 / (1 + np.exp(-x))
+    probs = sigmoid(logits)
+    preds = (probs > 0.5).astype(int)
 
-    return {"accuracy": float(acc), "macro_f1": float(macro_f1)}
+    macro_f1 = f1_score(labels, preds, average="macro", zero_division=0)
+    micro_f1 = f1_score(labels, preds, average="micro", zero_division=0)
 
-def label_score(score):
-    if score is None: return None
-    elif score < -0.75: return 0
-    elif score > 0.75: return 1
-    return None
+    return {"macro_f1": float(macro_f1), "micro_f1": float(micro_f1)}
 
-def train_model(raw_data):
-    processed_data = []
-    for item in raw_data:
-        for aspect in ASPECTS:
-            raw_score = item["aspect_score"].get(aspect)
-            class_label = label_score(raw_score)
-            if class_label is not None:
-                processed_data.append({"text": item["raw"], "aspect": aspect, "label": class_label})
 
-    df = pd.DataFrame(processed_data)
+def train_model():
+    raw_train = load_json(TRAIN)
+    raw_val = load_json(VALIDATE)
 
-    train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
+    train_df = multi_label_vector(raw_train)
+    val_df = multi_label_vector(raw_val)
+
+    # Convert to HuggingFace Datasets
     train_dataset = Dataset.from_pandas(train_df)
     val_dataset = Dataset.from_pandas(val_df)
 
-    features = train_dataset.features.copy()
-    features["label"] = ClassLabel(num_classes=2, names=["Negative", "Positive"])
-    train_dataset = train_dataset.cast(features)
-    val_dataset = val_dataset.cast(features)
+    # Tokenize
+    train_dataset = train_dataset.map(tokenize_and_format, batched=True, remove_columns=["text"])
+    val_dataset = val_dataset.map(tokenize_and_format, batched=True, remove_columns=["text"])
 
-    train_dataset = train_dataset.map(tokenize_and_format, batched=True)
-    val_dataset = val_dataset.map(tokenize_and_format, batched=True)
+    # Set format to PyTorch tensors
+    train_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
+    val_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 
-    train_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "label"])
-    val_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "label"])
 
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, num_labels=2)
+
+    model = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_NAME,
+        num_labels = NUM_LABELS,
+        problem_type = "multi_label_classification",
+        id2label = ID_TO_LABEL,
+        label2id = LABEL_TO_ID
+    )
 
     training_args = TrainingArguments(
-        output_dir="./results",
-        eval_strategy="epoch",
-        save_strategy="epoch",
-        learning_rate=2e-5,
-        per_device_train_batch_size=16,
-        per_device_eval_batch_size=16,
-        num_train_epochs=1,
-        weight_decay=0.01,
-        logging_steps=100,
-        fp16=True,
-        dataloader_num_workers=0,
-        report_to="none",
-        load_best_model_at_end=True,
-        metric_for_best_model="macro_f1",
-        greater_is_better=True
+        output_dir = RESULT,
+        eval_strategy = "epoch",
+        save_strategy = "epoch",
+        learning_rate = 3e-5,
+        per_device_train_batch_size = 4,
+        gradient_accumulation_steps= 4,
+        per_device_eval_batch_size = 4,
+        num_train_epochs = 3,
+        weight_decay = 0.01,
+        logging_steps = 50,
+        fp16 = False,
+        dataloader_num_workers = 0,
+        report_to = "none",
+        load_best_model_at_end = True,
+        metric_for_best_model = "macro_f1",
+        greater_is_better = True
     )
 
     trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=val_dataset,
-        compute_metrics=compute_metrics,
-        data_collator=DataCollatorWithPadding(tokenizer=tokenizer)
+        model = model,
+        args = training_args,
+        train_dataset = train_dataset,
+        eval_dataset = val_dataset,
+        compute_metrics = compute_metrics,
+        data_collator = DataCollatorWithPadding(tokenizer = tokenizer)
     )
 
     print(f"Trainer device: {training_args.device}")
-    print(f"Model device: {model.device}")
+
     trainer.train()
-    trainer.save_model(MODELS / "koelectra_aspect_model")
-    tokenizer.save_pretrained(MODELS / "koelectra_aspect_model")
+    trainer.save_model(MODEL / "kcelectra_multilabel")
+    tokenizer.save_pretrained(MODEL / "kcelectra_multilabel")
 
 
 def main():
-    raw_data = load_json(INPUT)
-    train_model(raw_data)
+    train_model()
 
 if __name__ == "__main__":
     main()

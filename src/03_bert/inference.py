@@ -1,182 +1,87 @@
 import json
-import sys
-from collections import defaultdict
-from pathlib import Path
-
 import numpy as np
 import torch
 from tqdm import tqdm
+from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from src.utils import PREP, MODELS, SCORES, load_json, save_json
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+MODEL = MODELS / "models" / "kcelectra_multilabel"
+INPUT = PREP / "preprocessed.json"
+OUTPUT = SCORES / "bert_scores.json"
 
-from src.aggregate import (
-    aggregate_restaurant_scores,
-    aggregate_review_aspect_scores,
-    build_category_rankings,
-    save_category_rankings,
-    save_scores,
-)
-from src.utils import DATA_DIR, MODELS, RAW_DATA, INTERIM, load_json, save_json
-INPUT = INTERIM / "preprocessed.json"
-OUTPUT = INTERIM / "absa_scores.json"
 
-print(torch.cuda.is_available())
+class InferenceDataset(Dataset):
+    def __init__(self, data, tokenizer, max_length=128):
+        self.data = data
+        self.tokenizer = tokenizer
+        self.max_length = max_length
 
-MODEL_PATH = MODELS / "koelectra_aspect_model"
-ASPECTS = ["맛", "서비스", "분위기", "가격", "시스템"]
-LABEL_MAP = {0: "Negative", 1: "Positive"}
-BATCH_SIZE = 16
+    def __len__(self):
+        return len(self.data)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
-
-tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
-model = model.half()
-model.to(device)
-model.eval()
-
-raw_data = load_json(RAW_DATA)
-id_to_name = {r_id: r_data.get("metadata", {}).get("name", r_id) for r_id, r_data in raw_data.items()}
-
-pre_data = load_json(INPUT)
-
-restaurant_tracking = defaultdict(lambda: {
-    "review_chunks": defaultdict(lambda: {
-        "aspect_scores": {a: [] for a in ASPECTS},
-        "sentences": [],
-    })
-})
-
-for i in tqdm(range(0, len(pre_data), BATCH_SIZE)):
-    batch_items = pre_data[i : i + BATCH_SIZE]
-    
-    flat_texts = []
-    flat_aspects = []
-    meta_info = []  # Tracking metadata to map predictions back correctly
-    
-    for item in batch_items:
+    def __getitem__(self, idx):
+        item = self.data[idx]
         text = item.get("raw", "")
-        if not text.strip(): 
-            continue
-            
-        # Extract restaurant ID from your rev_id (e.g., "32876009_0" -> "32876009")
-        rev_id = item["rev_id"]
-        r_id = rev_id.split("_")[0]
+        rev_id = item.get("rev_id", "")
         
-        for aspect in ASPECTS:
-            flat_texts.append(text)
-            flat_aspects.append(aspect)
-            meta_info.append((r_id, rev_id, text, aspect))
-            
-    if not flat_texts:
-        continue
+        inputs = self.tokenizer(
+            text,
+            truncation=True,
+            padding="max_length",
+            max_length=self.max_length,
+            return_tensors="pt"
+        )
+        
+        # Squeeze out batch dimension added by return_tensors
+        return {
+            "rev_id": rev_id,
+            "input_ids": inputs["input_ids"].squeeze(0),
+            "attention_mask": inputs["attention_mask"].squeeze(0)
+        }
 
-    # Tokenize the entire flat batch at once
-    inputs = tokenizer(
-        flat_texts, 
-        text_pair=flat_aspects, 
-        return_tensors="pt", 
-        truncation=True, 
-        padding=True, 
-        max_length=128
-    )
-    inputs = {k: v.to(device) for k, v in inputs.items()}
+def run_inference():
+    # Use GPU if available. Don't make your CPU suffer.
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
 
+    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+    model.to(device)
+    model.eval()
+
+    id2label = model.config.id2label
+
+    raw_data = load_json(INPUT)
+    dataset = InferenceDataset(raw_data, tokenizer)
+    dataloader = DataLoader(dataset, batch_size=16) 
+
+    results = []
 
     with torch.no_grad():
-        logits = model(**inputs).logits
-        # Use softmax to get the probability of class 1 (Positive)
-        probs = torch.softmax(logits, dim=1)
-        pos_probs = probs[:, 1].cpu().numpy()
+        for batch in tqdm(dataloader, desc="Inferencing"):
+            rev_ids = batch["rev_id"]
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
 
-    num_aspects = len(ASPECTS)
-    for idx in range(0, len(meta_info), num_aspects):
-        chunk_meta = meta_info[idx : idx + num_aspects]
-        chunk_probs = pos_probs[idx : idx + num_aspects]
-        
-        current_rid = chunk_meta[0][0]
-        current_rev_id = chunk_meta[0][1]
-        current_text = chunk_meta[0][2]
-        
-        rev_result = {}
-        review_bucket = restaurant_tracking[current_rid]["review_chunks"][current_rev_id]
-        for meta, prob in zip(chunk_meta, chunk_probs):
-            aspect = meta[3]
-            prob_val = round(float(prob), 3)
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+            logits = outputs.logits
             
-            rev_result[aspect] = prob_val
-            review_bucket["aspect_scores"][aspect].append(prob)
-            
-        review_bucket["sentences"].append({
-            "rev_id": current_rev_id,
-            "review": current_text,
-            "analysis": rev_result
-        })
+            probs = torch.sigmoid(logits)
+            preds = (probs > 0.5).int()
 
+            for i in range(len(rev_ids)):
+                predicted_labels = []
+                for idx, val in enumerate(preds[i].tolist()):
+                    if val == 1:
+                        predicted_labels.append(id2label[idx])
 
-# 5. Calculate Final Scores & Weights
-def get_raw_review(r_id, rev_id):
-    try:
-        review_idx = int(rev_id.rsplit("_", 1)[1])
-    except (IndexError, ValueError):
-        return {}
+                results.append({
+                    "rev_id": rev_ids[i],
+                    "labels": predicted_labels
+                })
 
-    reviews = raw_data.get(r_id, {}).get("reviews", [])
-    if 0 <= review_idx < len(reviews):
-        return reviews[review_idx]
-    return {}
+    save_json(results, OUTPUT)
 
-
-restaurant_results = {}
-for r_id, info in restaurant_tracking.items():
-    review_items = []
-    for rev_id, review_info in info["review_chunks"].items():
-        raw_review = get_raw_review(r_id, rev_id)
-        review_text = raw_review.get("content", "") if isinstance(raw_review, dict) else str(raw_review)
-        if not review_text:
-            review_text = " ".join(sentence["review"] for sentence in review_info["sentences"])
-
-        review_aspect_scores = {
-            a: round(float(np.mean(scores)) if scores else 0, 3)
-            for a, scores in review_info["aspect_scores"].items()
-        }
-        review_items.append({
-            "rev_id": rev_id,
-            "review": review_text,
-            "aspect_scores": review_aspect_scores,
-            "metadata": raw_review if isinstance(raw_review, dict) else {},
-            "sentences": review_info["sentences"],
-        })
-
-    final_scores, weighted_reviews, review_weight_summary = aggregate_review_aspect_scores(review_items)
-    sentence_count = sum(len(review["sentences"]) for review in review_items)
-
-    restaurant_results[r_id] = {
-        "name": id_to_name.get(r_id, r_id),
-        "review_count": len(review_items),
-        "sentence_count": sentence_count,
-        "aspect_scores": final_scores,
-        "review_weights_applied": True,
-        "review_weight_summary": review_weight_summary,
-        "reviews": weighted_reviews,
-    }
-
-
-sorted_results = aggregate_restaurant_scores(restaurant_results, raw_data)
-
-save_json(sorted_results, OUTPUT, 2)
-save_scores(sorted_results, DATA_DIR / "final" / "restaurant_scores.json")
-save_category_rankings(
-    build_category_rankings(sorted_results),
-    DATA_DIR / "final" / "category_rankings.json",
-)
-
-print("\n===== TOP 10 Restaurants =====\n")
-for idx, (rid, info) in enumerate(list(sorted_results.items())[:10]):
-    print(f"{idx+1}. {info['name']}")
-    print(f"추천점수: {info['rec_score']}")
-    print(f"카테고리 점수: {info['aspect_scores']}\n")
+if __name__ == "__main__":
+    run_inference()

@@ -1,15 +1,7 @@
 # 서대문구 맛집 추천 서비스!
 
-### 수집한 데이터는 레포에 공유하지 말아주세요!
-합법적으로 수집한 것이 아니라서, 나중에 레포를 public으로 전환하는데 차질이 생겨요.
 
-
-최신 commit에 리뷰 데이터가 있어서 제외하고 다시 올렸어요. 로컬 기록이랑 꼬이지 않도록 다음 코드 실행해주세요!
-```
-git fetch origin
-git reset --hard origin/main
-```
-이후로는 똑같이 'git pull --rebase' 하시면 됩니다. 해당 코드 실행하면 로컬 폴더가 웹의 최신 형태로 초기화되니, 로컬에서 수정한 사항 있으면 따로 저장해주세요!
+AI를 쓰는 것은 상관 없는데, 검수를 통해 사람이 쓴 듯한 코드를 만들어주세요. 모든 작업을 함수로 파편화해서 읽기가 너무 어렵고, 다른 스크립트의 역할을 이해하지 못한 듯 모든 일을 혼자서 다 하려고 합니다. 검수하는데 머리가 너무 아파요...
 
 
 ### Basic GitHub Commands
@@ -34,4 +26,10 @@ git checkout main
 git pull --rebase
 git branch -d branch-name
 git fetch --prune
+```
+
+#### When local history differs from origin
+```
+git fetch origin
+git reset --hard origin/main
 ```

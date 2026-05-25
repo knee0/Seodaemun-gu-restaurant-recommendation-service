@@ -24,8 +24,7 @@ for item in ls_data:
     clean_sample = {
         "rev_id": task_data["rev_id"],
         "raw": task_data["raw"],
-        # Split the display string back into your original token list
-        # "tokens": task_data["tokens"].split(" | "),
+        "tokens": task_data["tokens"],
         "labels": human_labels,
     }
     

@@ -19,6 +19,10 @@ Thumbs.db
 # All scraped data
 *.json
 *.jsonl
+
+# Except the 'web' subfolder
+!/web/**/*.json
+
 data/raw/*
 !data/raw/**/.gitkeep
 data/interim/*

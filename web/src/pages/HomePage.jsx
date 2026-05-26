@@ -4,8 +4,10 @@ import HomeRestaurantCard from "../components/HomeRestaurantCard";
 
 function HomePage() {
   const [restaurants, setRestaurants] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
+  //call restaurant data
   useEffect(() => {
     fetch("/data/web_mock_restaurants.json")
       .then((response) => response.json())
@@ -16,6 +18,11 @@ function HomePage() {
         console.error("데이터를 불러오는 데 실패했습니다:", error);
       });
   }, []);
+
+  //search bar: pass value to URL param and go to result page
+  const handleSearch = () => {
+    navigate(`/results?search=${encodeURIComponent(searchTerm)}`);
+  };
   
 
   const topRestaurants = restaurants.slice(0, 6);
@@ -27,8 +34,16 @@ function HomePage() {
         <p>5가지 평가 기준으로 맞춤 추천을 받을 수 있습니다</p>
 
         <div className="search-bar-wrapper">
-          <input type="text" placeholder="맛집 검색..." />
-          <button onClick={() => navigate("/preferences")}>맞춤 검색</button>
+        <input
+          type="text"
+          placeholder="맛집 검색..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
+        />
+          <button onClick={handleSearch}>맞춤 검색</button>
         </div>
       </section>
 

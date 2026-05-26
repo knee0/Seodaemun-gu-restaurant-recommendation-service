@@ -68,9 +68,5 @@ print(f"Total Complex Reviews (with >1 Aspect): {len(complex_samples)} ({complex
 complex_samples.sort(key=lambda x: x["count"], reverse=True)
 sample_size = min(20, len(complex_samples))
 for idx, c in enumerate(complex_samples[:sample_size]):
-    # Format each aspect to display its name and the predicted score
-#    aspects_with_scores = [f"{aspect} ({score:+.1f})" for aspect, score in c["aspects"].items()]
-#    aspects_str = ", ".join(aspects_with_scores)
-        
-    print(f"{idx+1} Aspect Count: {c['count']} Aspects: {c['aspects']}")
+    print(f"[{idx+1}] Aspect Count: [{c['count']}] Aspects: [{c['aspects']}]")
     print(f"Raw Text: {c['raw']}")

@@ -16,34 +16,25 @@ data = load_json(INPUT)
 # Word2Vec은 모든 단어를 분석하여, 기준 단어와의 유사도를 찾아줍니다.
 
 
-# "맛"은 다양한 음식명을 반영하느라 기준 단어가 많습니다.
 seed_lexicon = {
-    "맛": [
-        "음식", "메뉴", "맛집", "고기", "식사", "커피", "국물", "소스", "안주", "파스타", 
-        "치즈", "맥주", "반찬", "재료", "튀김", "피자", "김치", "디저트", "와인", "볶음밥",
-        "초밥", "떡볶이", "샐러드", "요리", "우동", "양념", "음료", "짬뽕", "칵테일",
-        "만두", "김밥", "크림", "새우", "연어", "식감", "야채", "사이드", "브런치",
-        "계란찜", "닭발", "라떼", "밀크티", "마라탕", "로제", "훠궈", "닭강정", "와플",
-        "바질", "티라미수", "가라아게", "소바", "닭볶음탕", "칠리", "게장", "말차",
-        "화과자", "패티", "떡갈비", "쫄면", "프라이", "대창", "백김치", "김치전",
-        "타코", "팟타이", "비프", "휘낭시에", "스키야키", "신라면", "카츠",
-        "맛있", "맛나", "배부르", "진하", "매콤하", "고소하", "달달하", "쫄깃하", "짜", "달",
-        "든든하", "느끼하", "쫀득하", "푸짐하", "시원하", "담백하", "질기", "칼칼하", "비리",
-        "신선하", "촉촉하", "맛없", "기름지", "슴슴하", "상큼하", "실하", "얼큰하", "찐하",
-        "마시", "드시", "땡기", "맛보", "곁들이",
-        "스끼다시", "회덮밥", "치즈플래터"
+    "음식": [
+        "맛", "음식", "메뉴", "맛집", "식사", "요리", "종류", "구성",
+        "양", "배부르", "푸짐하", "알차", "든든하",
+        "맛있", "맛나", "진하", "매콤하", "고소하", "달달하", "쫀득하", "담백하",
     ],
     "서비스": [
-        "친절", "사장", "직원", "기분", "추가", "서비스", "리필", "감사"
+        "친절", "사장", "직원", "기분", "추가", "서비스", "리필", "감사", "만족", "응대", "친절하", "배려"
     ],
-    # 분위기에 공간, 위생적인 측면을 확실히 포함할지 고민이네요. 깨끗한 화장실, 좁은 공간 등.
     "분위기": [
-        "분위기", "느낌", "자리", "인테리어", "깔끔", "데이트", "테이블", "공간", 
-        "편안", "힐링", "레트로", "편하", "예쁘", "이쁘", "멋지"
+        "분위기", "느낌", "인테리어", "데이트", "편안", "매장", "힐링", "레트로", "예쁘", "이쁘", "멋지", "추억"
     ],
     "가격": [
-        "가성비", "가격", "혜자", "저렴하", "비싸", "알차", "싸"
+        "가성비", "가격", "혜자", "저렴하", "비싸", "싸"
     ],
+    "편의성": [
+        "시간", "예약", "가능", "편하", "편리", "주차", "주차장", "화장실", "청결", "깨끗", 
+        "웨이팅", "대기", "줄", "시간", "브레이크", "타임", "시설", "유아용", "아기의자", "반려동물"
+    ]
 }
 
 
@@ -53,17 +44,17 @@ pos_seeds = [
     "저렴하", "착하", "알차", "재밌", "든든하", "멋지", "빠르", "푸짐하", "야무지", 
     "재미있", "실하", "기쁘", "멋있", "알맞", "좋아하", "즐기", "어울리", "생각나", 
     "땡기", "어우러지", "끝내주", "반하", "맛집", "친절", "감사", "깔끔", "혜자",
+    "짱", "제대로", "가득", "듬뿍", "바삭", "야들야들"
 ]
 neg_seeds = [
-    "늦", "적", "작", "비싸", "힘들", "느끼하", "나쁘", "질기", "과하", "비리", "맛없", "싫",
-    "퍽퍽하", "정신없", "속상하", "질리", "물리", "싫어하", "상하",
+    "늦", "적", "작", "비싸", "힘들", "느끼하", "나쁘", "질기", "과하", "비리", "맛없", "싫", "지옥",
+    "퍽퍽하", "정신없", "속상하", "질리", "물리", "싫어하", "상하", "별로", "그닥", "전혀", "아예", "최악"
 ]
 
 
 # 의미 없는 단어들. 적극적으로 추가하진 않았습니다.
 stopwords = {
-    "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일",
-    "주말", "평일", "오전", "오후", "낮시간", "저녁시간", "새벽", "빨갛"
+    "빨갛", "야쿠르트", "오용", "미션", "내년", "진행자"
 }
 
 
@@ -75,10 +66,10 @@ for rev in data:
     doc = []
     for t in rev["tokens"]:
         word, tag = t.split("/")
-        word_to_tag[word] = tag
-
         cleaned_word = re.sub(r'\d+','', word)
+
         if word not in stopwords:
+            word_to_tag[word] = tag
             doc.append(cleaned_word)
     if doc:
         cleaned_docs.append(doc)
@@ -112,13 +103,16 @@ p_norm, n_norm = np.linalg.norm(p_avg), np.linalg.norm(n_avg)
 
 # 형용사, 동사, 명사로 감정 사전을 구성합니다.
 # 동사와 명사 중에는 '감정'과 무관한 단어가 많아, 특정 단어만 감정 사전에 추가합니다.
-sentiment_tags = {"VV", "VA", "NNG"}
-sentiment_vv = {
-    "좋아하", "즐기", "어울리", "생각나", "땡기", "어우러지", "끝내주", "반하",
-    "질리", "물리", "싫어하", "상하",
-}
-sentiment_nng = {"맛집", "친절", "감사", "깔끔", "혜자"}
-whitelists = {"VV": sentiment_vv, "NNG": sentiment_nng}
+sentiment_tags = {"VV", "VA", "NNG", "NNP", "MAG"}
+
+whitelists = ["좋아하", "즐기", "어울리", "생각나", "땡기", "어우러지", "끝내주", 
+    "반하", "질리", "물리", "싫어하", "상하", #VV
+    "맛집", "친절", "감사", "깔끔", #NNG
+    "혜자", #NNP
+    "짱", "제대로", "가득", "듬뿍", "배불리", "잔뜩", "한가득", "아낌없이", "넉넉히",
+    "바삭", "야들야들", "살살", "달달", "부들부들", "아삭", "쫄깃쫄깃", "꼬들",
+    "새콤달콤", "탱글탱글", "빠삭", "사르르", "별로", "그닥", "전혀", "아예" #MAG
+]
 
 
 # 감정 사전을 제작합니다.
@@ -127,11 +121,10 @@ sentiment_lexicon = {}
 for word in w2v_model.wv.index_to_key:
     tag = word_to_tag.get(word, "")
     
-    # 형용사, 동사, 명사만 사용합니다.
-    if not any(t in tag for t in sentiment_tags): continue
-
-    # 동사, 명사 중 미리 선정한 '감정 단어'만 사용합니다.
-    if any(t in tag and word not in whitelists[t] for t in whitelists if t in tag): continue
+    if tag not in sentiment_tags:
+        continue
+    if tag != 'VA':
+        if word not in whitelists: continue
 
     # 현재 단어의 감정 벡터를 계산합니다.
     w_vec = w2v_model.wv[word]
@@ -158,21 +151,60 @@ sentiment_lexicon = {w: float(np.tanh((s - mean_s) / std_s)) for w, s in sentime
 # 형용사, 동사, 명사만 사용합니다.
 aspect_tags = {"VV", "VA", "NNG", "NNP"}
 word_best = {}
+BASE_THRESHOLD = 0.55
+RELATIVE_MARGIN = 0.05
+category_seeds = {}
 
+
+# 카테고리별 기준 단어 정리하기
 for cat, seeds in seed_lexicon.items():
-    # Word2Vec 모델이 학습하지 못한 단어는 기준 단어로 활용할 수 없습니다.
     v_seeds = [s for s in seeds if s in w2v_model.wv]
-    if not v_seeds: raise ValueError("category: 학습에 사용된 기준 단어 없음.")
 
-    # 기준 단어는 모두 1.0(연관성 높음)으로 설정
-    for s in v_seeds: word_best[s] = (cat, 1.0)
-    
-    # 현재 단어의 카테고리 벡터를 구하고, 네 개의 카테고리와의 유사도를 비교합니다.
-    # 가장 가까운 카테고리와의 유사도가 일정 수준(0.55) 이상이면, 해당 카테고리 사전의 후보로 추가합니다.
-    for word, score in w2v_model.wv.most_similar(positive=v_seeds, topn=100):
-        if word_to_tag[word] not in aspect_tags: continue
-        if score >= 0.55 and score > word_best.get(word, ("", -1.0))[1]:
-            word_best[word] = (cat, score)
+    # Word2Vec 모델이 학습하지 못한 단어는 기준 단어로 활용 불가.
+    if not v_seeds:
+        raise ValueError("category: 학습에 사용된 기준 단어 없음.")
+
+    category_seeds[cat] = v_seeds
+
+    # 기준 단어는 해당 카테고리의 최상위 단어(1.0)로 설정
+    for s in v_seeds:
+        word_best[s] = (cat, 1.0)
+
+
+# 카테고리 사전의 후보 단어 정리
+candidate_words = set()
+for cat, v_seeds in category_seeds.items():
+    for word, score in w2v_model.wv.most_similar(positive = v_seeds, topn = 100):
+        if word in word_best:
+            continue
+        if word_to_tag.get(word, "") not in aspect_tags:
+            continue
+        candidate_words.add(word)
+
+
+for word in candidate_words:
+    tag = word_to_tag.get(word, "")
+    cat_scores = {}
+
+    for cat, v_seeds in category_seeds.items():
+        if cat != '음식' and tag == 'NNP':
+            continue
+        score = w2v_model.wv.n_similarity(v_seeds, [word])
+        cat_scores[cat] = score
+
+    if not cat_scores:
+        continue
+
+    sorted_cats = sorted(cat_scores.items(), key = lambda x: x[1], reverse = True)
+    best_cat, best_score = sorted_cats[0]
+
+    if best_score < BASE_THRESHOLD:
+        continue
+    if len(sorted_cats) > 1:
+        second_cat, second_score = sorted_cats[1]
+        if (best_score - second_score) <= RELATIVE_MARGIN:
+            continue
+    word_best[word] = (best_cat, best_score)
 
 
 # 구한 후보 단어를 카테고리 사전에 추가합니다.

@@ -6,9 +6,6 @@ ASPECT_LEXICON = LEXICON / "aspect_lexicon.json"
 SENTIMENT_LEXICON = LEXICON / "sentiment_lexicon.json"
 OUTPUT = SCORES / "lexicon_scores.json"
 
-# 한국어의 Negation 구조는 영어처럼 간단하지 않아서, 구현에 더 고민이 필요해 보이네요.
-# NEGATION_WORDS = {"안", "못", "않"}
-
 # 감정 단어 주위를 얼마나 살펴볼 것인지 정의합니다. (3: 주위의 세 단어)
 DEFAULT_WINDOW_SIZE = 3
 
@@ -18,7 +15,7 @@ def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
                            find_aspect, window_size=DEFAULT_WINDOW_SIZE):
 
     # 감정 단어, 카테고리 단어의 위치(index)를 저장.
-    aspect_positions = {'맛': [], '서비스': [], '분위기': [], '가격': []}
+    aspect_positions = {'음식': [], '서비스': [], '분위기': [], '가격': [], '편의성': []}
     sentiment_positions = []
 
     # 문장에서 감정 단어, 카테고리 단어의 위치(index) 찾기.
@@ -28,16 +25,12 @@ def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
         if word in sentiment_lexicon:
             sentiment_positions.append(idx)
 
-    aspect_scores = {'맛': [], '서비스': [], '분위기': [], '가격': []}
+    aspect_scores = {'음식': [], '서비스': [], '분위기': [], '가격': [], '편의성': []}
 
     for idx in sentiment_positions:
         word = words[idx]
         score = sentiment_lexicon[word]
 
-        # 한국어의 Negation을 처리하기에는 너무 단순하여 비활성화 했습니다.
-        #prev_words = words[max(0, idx-2) : idx]
-        #if any(word in NEGATION_WORDS for word in prev_words):
-        #    score = -score
 
         # 감정 단어가 카테고리 단어라면, 해당 카테고리에 바로 연결.
         if word in find_aspect:
@@ -74,10 +67,12 @@ def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
         if not aspect_scores[aspect]: continue
         mean_score = round(np.mean(aspect_scores[aspect]), 4)
 
-        if mean_score >= 0.5:
+        if mean_score >= 0.75:
             aspect_sentiment.append(f"{aspect}_긍정")
-        elif mean_score <= -0.5:
+        elif mean_score <= -0.75:
             aspect_sentiment.append(f"{aspect}_부정")
+        else:
+            aspect_sentiment.append(f"{aspect}_중립")
 
     return aspect_sentiment
 

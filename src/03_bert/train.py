@@ -19,7 +19,8 @@ VALIDATE = DATASET / "golden_val_final.json"
 RESULT = MODELS / "./results"
 MODEL = MODELS / "./models"
 
-ASPECT_LABELS = ['맛_긍정', '맛_부정', '서비스_긍정', '서비스_부정', '분위기_긍정', '분위기_부정', '가격_긍정', '가격_부정']
+ASPECT_LABELS = ['맛_긍정', '맛_중립', '맛_부정', '서비스_긍정', '서비스_중립', '서비스_부정', 
+    '분위기_긍정', '분위기_중립', '분위기_부정', '가격_긍정', '가격_중립', '가격_부정', '편의성_긍정', '편의성_중립', '편의성_부정']
 NUM_LABELS = len(ASPECT_LABELS)
 LABEL_TO_ID = {}
 ID_TO_LABEL = {}

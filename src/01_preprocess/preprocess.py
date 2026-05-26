@@ -12,8 +12,8 @@ def normalize(text):
     # 여러 개의 자음 하나로 줄이기 (ㅋㅋㅋㅋ, ㅠㅠㅠ -> ㅋㅋ, ㅠㅠ)
     text = re.sub(r"([ㄱ-ㅎㅏ-ㅣ])\1+", r"\1\1", text)
 
-    # 한글, 알파벳, 숫자, [.,!?~] 외의 특수문자 제거.
-    text = re.sub(r"[^가-힣a-zA-Z0-9\s.,!?~]", "", text)
+    # 한글, 숫자, [.,!?~] 외의 특수문자 제거.
+    text = re.sub(r"[^가-힣0-9\s.,!?~]", "", text)
 
     # 문장부호 주위의 불필요한 공백 제거.
     text = re.sub(r"\s+([.,!?~])", r"\1", text)
@@ -38,6 +38,9 @@ def preprocess(data):
 
             raw = review.get("content", "").strip()
             text = normalize(raw)
+
+            if not text or len(text) <= 1:
+                continue
 
             review_tokens = kiwi.tokenize(text)
             dataset.append({

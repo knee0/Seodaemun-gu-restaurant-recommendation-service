@@ -4,8 +4,8 @@ from collections import Counter
 
 INPUT = PREP / "preprocessed.json"
 
-target1 = 'VA'
-target2 = 'VV'
+target1 = 'NNG'
+target2 = 'NNP'
 target3 = 'MAG'
 
 def get_seed_clues(data):
@@ -26,7 +26,7 @@ def get_seed_clues(data):
             elif tag == target3:
                 adj_counts[word] += 1
 
-    return noun_counts.most_common(100), nnp_counts.most_common(100), adj_counts.most_common(100)
+    return noun_counts.most_common(100), nnp_counts.most_common(100), adj_counts.most_common(200)
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
     for word, count in common_nnps:
         print(f"{word}: {count}", end=" | ")
 
-    print(f"\n=== TOP 100 COMMON {target3} ===")
+    print(f"\n=== TOP 200 COMMON {target3} ===")
     for word, count in common_adjs:
        print(f"{word}: {count}", end=" | ")
 

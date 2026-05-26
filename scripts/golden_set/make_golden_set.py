@@ -77,7 +77,8 @@ def main():
 
         # 비율을 참고하여 카테고리마다 수집할 리뷰 개수를 구합니다.
         # 너무 비율이 작은 경우 리뷰가 수집이 안 되어, 최소 개수를 10으로 고정합니다.
-        aspect_sample_number[aspect] = max(10, int(ratio * STRATIFIED_TARGET))
+        aspect_sample_number[aspect] = max(5, int(ratio * STRATIFIED_TARGET))
+
 
 
     # 가장 많은 카테고리의 리뷰 수집 수를 줄여, 리뷰 수집 수를 TARGET으로 맞춥니다.

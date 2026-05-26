@@ -28,7 +28,7 @@ function ResultPage() {
     { key: "taste", label: "맛" },
     { key: "price", label: "가격" },
     { key: "mood", label: "분위기" },
-    { key: "system", label: "시스템" },
+    { key: "system", label: "편의성" },
     { key: "service", label: "서비스" }
   ];
 
@@ -40,7 +40,7 @@ function ResultPage() {
     taste: "맛",
     price: "가격",
     mood: "분위기",
-    system: "시스템",
+    system: "편의성",
     service: "서비스"
   };
 

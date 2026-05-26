@@ -9,7 +9,7 @@ function ResultRestaurantCard({ restaurant }) {
     { key: "taste", label: "맛" },
     { key: "price", label: "가격" },
     { key: "mood", label: "분위기" },
-    { key: "system", label: "시스템" },
+    { key: "system", label: "편의성" },
     { key: "service", label: "서비스" }
   ];
 

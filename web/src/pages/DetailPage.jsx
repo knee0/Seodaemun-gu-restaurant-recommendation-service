@@ -82,7 +82,7 @@ function DetailPage() {
               <StarRating score={restaurant.scores.service} />
             </div>
             <div className="detail-score-row">
-              <span className="detail-score-label">시스템</span>
+              <span className="detail-score-label">편의성</span>
               <StarRating score={restaurant.scores.system} />
             </div>
           </div>

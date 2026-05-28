@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from src.utils import MODELS, DATASET, load_json
 from datasets import Dataset
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, hamming_loss
 from transformers import (
     AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer, DataCollatorWithPadding, EvalPrediction
 )
@@ -60,7 +60,13 @@ def compute_metrics(p: EvalPrediction):
     macro_f1 = f1_score(labels, preds, average="macro", zero_division=0)
     micro_f1 = f1_score(labels, preds, average="micro", zero_division=0)
 
-    return {"macro_f1": float(macro_f1), "micro_f1": float(micro_f1)}
+    subset_accuracy = accuracy_score(labels, preds)
+    h_loss = hamming_loss(labels, preds)
+
+    return {
+        "macro_f1": float(macro_f1), "micro_f1": float(micro_f1),
+        "subset_accuracy": float(subset_accuracy), "hamming_loss": float(h_loss)
+    }
 
 
 def train_model():
@@ -96,18 +102,18 @@ def train_model():
         output_dir = RESULT,
         eval_strategy = "epoch",
         save_strategy = "epoch",
-        learning_rate = 3e-5,
-        per_device_train_batch_size = 4,
-        gradient_accumulation_steps= 4,
-        per_device_eval_batch_size = 4,
+        learning_rate = 2e-5,
+        per_device_train_batch_size = 16,
+        per_device_eval_batch_size = 16,
         num_train_epochs = 3,
         weight_decay = 0.01,
         logging_steps = 50,
+        save_total_limit = 2,
         fp16 = False,
         dataloader_num_workers = 0,
         report_to = "none",
         load_best_model_at_end = True,
-        metric_for_best_model = "macro_f1",
+        metric_for_best_model = "subset_accuracy",
         greater_is_better = True
     )
 

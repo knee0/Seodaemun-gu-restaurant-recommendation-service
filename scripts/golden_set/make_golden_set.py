@@ -13,8 +13,8 @@ def main():
     random.seed(42)
 
     INPUT = SCORES / "lexicon_scores.json"
-    GOLDEN_VAL = DATASET / "golden_val.json"
-    GOLDEN_TEST = DATASET / "golden_test.json"
+    GOLDEN_VAL = DATASET / "golden_val_raw.json"
+    GOLDEN_TEST = DATASET / "golden_test_raw.json"
     TRAIN_DATA = DATASET / "train_data.json"
 
     results = load_json(INPUT)
@@ -54,13 +54,14 @@ def main():
     GHOST_TARGET = 125
     COMPLEX_TARGET = 125
     STRATIFIED_TARGET = 250
-    
-    val_ghosts = random.sample(ghost_pool, GHOST_TARGET)
-    test_ghosts = random.sample(ghost_pool, GHOST_TARGET)
 
-    val_complex = random.sample(complex_pool, COMPLEX_TARGET)
-    test_complex = random.sample(complex_pool, COMPLEX_TARGET)
+    random.shuffle(ghost_pool)
+    val_ghosts = ghost_pool[: GHOST_TARGET]
+    test_ghosts = ghost_pool[GHOST_TARGET : GHOST_TARGET * 2]
 
+    random.shuffle(complex_pool)
+    val_complex = complex_pool[: COMPLEX_TARGET]
+    test_complex = complex_pool[COMPLEX_TARGET : COMPLEX_TARGET * 2]
 
     # Stratified는 모집단의 비율에 맞춰 표본을 수집하는 방식입니다.
     # 예컨대 총 리뷰 중 '맛' 리뷰가 70%, '서비스' 리뷰가 30%라면, 
@@ -89,11 +90,12 @@ def main():
     val_stratified = []
     test_stratified = []
     for aspect, count in aspect_sample_number.items():
-        # 단일 카테고리 리뷰에서 계산한 개수만큼 표본을 추출합니다.
-        aspect_sample_val = random.sample(single_pool[aspect], count)
+        random.shuffle(single_pool[aspect])
+
+        aspect_sample_val = single_pool[aspect][: count]
         val_stratified.extend(aspect_sample_val)
 
-        aspect_sample_test = random.sample(single_pool[aspect], count)
+        aspect_sample_test = single_pool[aspect][count : count * 2]
         test_stratified.extend(aspect_sample_test)
 
 

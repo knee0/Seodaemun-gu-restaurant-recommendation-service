@@ -1,8 +1,8 @@
 import json
 from src.utils import DATASET, load_json, save_json
 
-INPUT = DATASET / "golden_val_ls.json"
-OUTPUT = DATASET / "golden_val.json"
+INPUT = DATASET / "golden_test_ls.json"
+OUTPUT = DATASET / "golden_test.json"
 
 ls_data = load_json(INPUT)
 

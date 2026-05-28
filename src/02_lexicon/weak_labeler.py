@@ -7,25 +7,22 @@ SENTIMENT_LEXICON = LEXICON / "sentiment_lexicon.json"
 OUTPUT = SCORES / "lexicon_scores.json"
 
 # 감정 단어 주위를 얼마나 살펴볼 것인지 정의합니다. (3: 주위의 세 단어)
-DEFAULT_WINDOW_SIZE = 3
+DEFAULT_WINDOW_SIZE = 5
 
 
 # 감정 단어가 있으면, 단어의 '감정 점수'를 가장 가까운 카테고리 단어의 '카테고리'에 부여합니다.
 def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
                            find_aspect, window_size=DEFAULT_WINDOW_SIZE):
 
-    # 감정 단어, 카테고리 단어의 위치(index)를 저장.
-    aspect_positions = {'음식': [], '서비스': [], '분위기': [], '가격': [], '편의성': []}
+    # 감정 단어의 위치(index)를 저장.
     sentiment_positions = []
 
     # 문장에서 감정 단어, 카테고리 단어의 위치(index) 찾기.
     for idx, word in enumerate(words):
-        if word in find_aspect:
-            aspect_positions[find_aspect[word]].append(idx)
         if word in sentiment_lexicon:
             sentiment_positions.append(idx)
 
-    aspect_scores = {'음식': [], '서비스': [], '분위기': [], '가격': [], '편의성': []}
+    aspect_scores = {aspect: [] for aspect in aspect_lexicon.keys()}
 
     for idx in sentiment_positions:
         word = words[idx]
@@ -33,8 +30,8 @@ def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
 
 
         # 감정 단어가 카테고리 단어라면, 해당 카테고리에 바로 연결.
-        if word in find_aspect:
-            aspect_scores[find_aspect[word]].append(score)
+        if word in {"맛있", "맛나", "맛없"}:
+            aspect_scores["음식"].append(score)
             continue
 
         # 다른 감정 단어는 가장 가까운 카테고리 단어의 카테고리와 연결.
@@ -72,7 +69,7 @@ def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
         elif mean_score <= -0.75:
             aspect_sentiment.append(f"{aspect}_부정")
         else:
-            aspect_sentiment.append(f"{aspect}_중립")
+            pass
 
     return aspect_sentiment
 

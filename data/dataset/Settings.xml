@@ -1,0 +1,18 @@
+<View>
+  <Header value="Raw Korean Review" />
+  <Text name="text" value="$raw" />
+
+  <Header value="Select Aspect-Sentiment Pairs" />
+  <Choices name="absa_labels" toName="text" choice="multiple">
+    <Choice value="음식_긍정" />
+    <Choice value="음식_부정" />
+    <Choice value="서비스_긍정" />
+    <Choice value="서비스_부정" />
+    <Choice value="분위기_긍정" />
+    <Choice value="분위기_부정" />
+    <Choice value="가격_긍정" />
+    <Choice value="가격_부정" />
+    <Choice value="편의성_긍정" />
+    <Choice value="편의성_부정" />
+  </Choices>
+</View>

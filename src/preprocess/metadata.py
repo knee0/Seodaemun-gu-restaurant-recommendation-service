@@ -1,0 +1,111 @@
+import json
+from math import exp, log, log1p
+from datetime import datetime, timezone
+from src.utils import RAW_DATA, PREP, load_json, save_json
+
+INPUT = RAW_DATA
+OUTPUT = PREP / "metadata.json"
+
+# Recency: 오래된 리뷰의 영향력 감소.
+RECENCY_PARAM = 1000
+# 1000 기준, 1년 전: 0.88 / 2년 전: 0.59 / 3년 전: 0.3 / 최소: 0.1
+
+# Activity: 작성한 리뷰가 많으면 영향력 증가.
+# Loyalty: 식당 방문 횟수가 많으면 영향력 증가.
+# 최대 영향력 1.4
+# LIMIT은 상위 95% 값으로 설정 (scripts/metadata_dist 참조)
+ACTIVITY_PARAM = 0.4
+ACTIVITY_LIMIT = 1914
+LOYALTY_PARAM = 0.1
+LOYALTY_LIMIT = 5
+
+
+def calculate_weight(visit_time, review_date_flag, review_count, visit_count):
+    # 며칠 차이나는지 비교하기 위해 datetime 객체로 전환합니다.
+    if review_date_flag:
+        start_date = datetime.strptime(visit_time[:-2], "%y.%m.%d").replace(tzinfo=timezone.utc)
+    else:
+        start_date = datetime.strptime(visit_time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
+
+    # 수집된 리뷰 중 가장 최근 리뷰가 5월 5일 입니다.
+    target_date = datetime(2026, 5, 5, tzinfo=timezone.utc)
+    days_diff = (target_date - start_date).days
+    power = -((days_diff / RECENCY_PARAM) ** 2)
+    
+    # 최소 영향력은 0.1로 설정합니다.
+    recency = max(0.1, exp(power))
+
+    # LIMIT 이상의 리뷰 작성 수는 LIMIT과 같도록 처리합니다. (최대 영향력 1.4로 제한)
+    capped_rc = min(review_count, ACTIVITY_LIMIT)
+    activity = 1 + ACTIVITY_PARAM * (log(capped_rc) / log(ACTIVITY_LIMIT))
+
+    # LIMIT 이상의 식당 방문 수는 LIMIT과 같도록 처리합니다. (최대 영향력 1.4로 제한)
+    capped_vc = min(visit_count, LOYALTY_LIMIT) - 1
+    loyalty = 1 + LOYALTY_PARAM * capped_vc
+
+    # 리뷰의 총 영향력(weight)을 리턴합니다.
+    return recency * activity * loyalty
+
+def make_metadata(data):
+    dataset = {}
+
+    for rid, restaurant in data.items():
+        # 케이크 주문제작 매장이 보여서 제외합니다.
+        if rid == "1572782359":
+            continue
+        
+        metadata = restaurant.get("metadata", {})
+
+        # 식당 이름과 카테고리(한식/일식 등).
+        res_data = {
+            "name": metadata.get("name"),
+            "category": metadata.get("category")
+        }
+
+        # 리뷰에 대한 정보(리뷰 ID, 방문 일자, 작성 리뷰 개수, 방문 횟수)와 총 영향력.
+        rev_datas = []
+        for idx, review in enumerate(restaurant.get("reviews", [])):
+            # preprocessed에서 만든 리뷰 ID와 같은 형식.
+            rev_id = f"{rid}_{idx}"
+
+            # visit_time 값이 없는 리뷰는 review_date 값으로 대체합니다.
+            review_date_flag = False
+            visit_time = review.get("visit_datetime")
+            if not visit_time:
+                visit_time = review.get("review_date")
+                review_date_flag = True
+            
+            # review_count 값이 없으면 최솟값인 1로 처리합니다.
+            review_count = review.get("review_count")
+            if not review_count:
+                review_count = 1
+
+            # visit_count 값이 없으면 최솟값인 1로 처리합니다.
+            visit_count = review.get("visit_count")
+            if not visit_count:
+                visit_count = 1
+
+            weight = calculate_weight(visit_time, review_date_flag, review_count, visit_count)
+
+            rev_datas.append({
+                "rev_id": rev_id,
+                "visit_time": visit_time,
+                "review_count": review_count,
+                "visit_count": visit_count,
+                "weight": weight
+            })
+
+        dataset[rid] = {
+            "res_data": res_data,
+            "rev_data": rev_datas
+        }
+                                
+    return dataset
+
+def main():
+    data = load_json(INPUT)
+    metadata = make_metadata(data)
+    save_json(metadata, OUTPUT, 4)
+
+if __name__ == "__main__":
+    main()

@@ -57,8 +57,8 @@ if valid_count > 0:
 print("\n=== INVESTIGATING GHOST SAMPLES ===")
 sample_size = min(20, len(ghost_samples))
 random_ghosts = random.sample(ghost_samples, sample_size)
-for idx, g in enumerate(random_ghosts):
-    print(f"[{idx+1}] Raw Text: {g}")
+#for idx, g in enumerate(random_ghosts):
+    #print(f"[{idx+1}] Raw Text: {g}")
 
 
 print("\n=== INVESTIGATING COMPLEX SAMPLES (MULTIPLE ASPECTS) ===")
@@ -67,6 +67,6 @@ print(f"Total Complex Reviews (with >1 Aspect): {len(complex_samples)} ({complex
 
 complex_samples.sort(key=lambda x: x["count"], reverse=True)
 sample_size = min(20, len(complex_samples))
-for idx, c in enumerate(complex_samples[:sample_size]):
-    print(f"[{idx+1}] Aspect Count: [{c['count']}] Aspects: [{c['aspects']}]")
-    print(f"Raw Text: {c['raw']}")
+#for idx, c in enumerate(complex_samples[:sample_size]):
+    #print(f"[{idx+1}] Aspect Count: [{c['count']}] Aspects: [{c['aspects']}]")
+    #print(f"Raw Text: {c['raw']}")

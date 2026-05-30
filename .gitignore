@@ -20,20 +20,9 @@ Thumbs.db
 *.json
 *.jsonl
 
-# Except the 'web' subfolder
+# Allow json on /web subfolders
 !/web/**/*.json
-
-data/raw/*
-!data/raw/**/.gitkeep
-data/interim/*
-!data/interim/**/
-!data/interim/**/.gitkeep
-data/processed/*
-!data/processed/**/.gitkeep
-data/final/*
-!data/final/**/.gitkeep
-prototype/data/*
-!prototype/data/**/.gitkeep
+!/data/scores/*.json
 
 # No models
 models/*

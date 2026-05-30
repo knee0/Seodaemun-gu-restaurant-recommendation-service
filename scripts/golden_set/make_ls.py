@@ -1,10 +1,9 @@
-import json
 from src.utils import DATASET, load_json, save_json
 
-VAL_IN = DATASET / "golden_val_raw.json"
-VAL_OUT = DATASET / "golden_val_raw_ls.json"
-TEST_IN = DATASET / "golden_test_raw.json"
-TEST_OUT = DATASET / "golden_test_raw_ls.json"
+VAL_IN = DATASET / "golden_val_append_raw.json"
+VAL_OUT = DATASET / "golden_val_append_raw_ls.json"
+TEST_IN = DATASET / "golden_test_append_raw.json"
+TEST_OUT = DATASET / "golden_test_append_raw_ls.json"
 
 
 def format_for_ls(INPUT, OUTPUT):

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import StarRating from "../components/StarRating";
 
+//star ratings
 function renderStars(rating) {
   const fullStars = "★".repeat(Math.floor(rating));
   const emptyStars = "☆".repeat(5 - Math.floor(rating));
@@ -12,6 +14,7 @@ function DetailPage() {
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
 
+  //fetch restaurant data from restaurant ID in URL
   useEffect(() => {
     fetch("/data/web_mock_restaurants.json")
       .then((response) => response.json())
@@ -55,8 +58,7 @@ function DetailPage() {
         </div>
 
         <div className="detail-rating-summary">
-          <span className="detail-stars">{renderStars(restaurant.total_score)}</span>
-          <span className="detail-total-score">{restaurant.total_score}</span>
+          <StarRating score={restaurant.total_score} />
           <span className="detail-review-count">({restaurant.review_count}개 리뷰)</span>
         </div>
 
@@ -65,23 +67,23 @@ function DetailPage() {
           <div className="detail-score-list">
             <div className="detail-score-row">
               <span className="detail-score-label">맛</span>
-              <span className="detail-score-value">{restaurant.scores.taste}</span>
+              <StarRating score={restaurant.scores.taste} />
             </div>
             <div className="detail-score-row">
               <span className="detail-score-label">분위기</span>
-              <span className="detail-score-value">{restaurant.scores.mood}</span>
+              <StarRating score={restaurant.scores.mood} />
             </div>
             <div className="detail-score-row">
               <span className="detail-score-label">가격</span>
-              <span className="detail-score-value">{restaurant.scores.price}</span>
+              <StarRating score={restaurant.scores.price} />
             </div>
             <div className="detail-score-row">
               <span className="detail-score-label">서비스</span>
-              <span className="detail-score-value">{restaurant.scores.service}</span>
+              <StarRating score={restaurant.scores.service} />
             </div>
             <div className="detail-score-row">
-              <span className="detail-score-label">시스템</span>
-              <span className="detail-score-value">{restaurant.scores.system}</span>
+              <span className="detail-score-label">편의성</span>
+              <StarRating score={restaurant.scores.system} />
             </div>
           </div>
         </section>

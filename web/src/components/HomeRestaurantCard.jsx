@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import StarRating from "./StarRating";
 
 function HomeRestaurantCard({ restaurant }) {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ function HomeRestaurantCard({ restaurant }) {
         <p className="restaurant-description">{restaurant.description}</p>
 
         <div className="restaurant-meta">
-          <span>총점 {restaurant.total_score}</span>
+          <StarRating score={restaurant.total_score} />
           <span>리뷰 {restaurant.review_count}개</span>
         </div>
       </div>

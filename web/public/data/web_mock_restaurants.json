@@ -1,0 +1,249 @@
+[
+  {
+    "id": "r001",
+    "name": "스시 마스터",
+    "category": "일식",
+    "description": "신선한 재료로 만드는 오마카세",
+    "image_url": "/images/sushi-master.jpg",
+    "review_count": 891,
+    "total_score": 4.6,
+    "scores": {
+      "taste": 5.0,
+      "price": 3.8,
+      "mood": 4.6,
+      "system": 4.9,
+      "service": 4.8
+    },
+    "phone": "02-3456-7890",
+    "address": "서울특별시 서대문구 신촌로 123",
+    "naver_map_url": "https://map.naver.com",
+    "kakao_map_url": "https://map.kakao.com",
+    "reviews": [
+      {
+        "author": "윤진",
+        "rating": 5,
+        "date": "2026-05-19",
+        "text": "오마카세 코스가 정말 훌륭했어요. 셰프님의 설명도 재미있고 생생한 재료가 최고!"
+      },
+      {
+        "author": "한우",
+        "rating": 5,
+        "date": "2026-05-16",
+        "text": "일본에서 먹던 맛 그대로예요. 가격은 있지만 그만한 가치가 충분합니다."
+      },
+      {
+        "author": "송미",
+        "rating": 4,
+        "date": "2026-05-11",
+        "text": "예약이 어렵지만 꼭 한번 가볼만해요. 모든 스시가 입에서 녹아요."
+      }
+    ]
+  },
+  {
+    "id": "r002",
+    "name": "이탈리안 키친",
+    "category": "양식",
+    "category_raw": "파스타,피자",
+    "description": "정통 이탈리안 파스타와 피자",
+    "image_url": "/images/italian-kitchen.jpg",
+    "review_count": 528,
+    "total_score": 4.6,
+    "scores": {
+      "taste": 4.9,
+      "price": 4.0,
+      "mood": 4.8,
+      "system": 4.7,
+      "service": 4.5
+    },
+    "tags": [
+      "파스타",
+      "피자",
+      "분위기"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r003",
+    "name": "파스타 공방",
+    "category": "양식",
+    "category_raw": "이탈리아음식",
+    "description": "수제 파스타의 진수",
+    "image_url": "/images/pasta-workshop.jpg",
+    "review_count": 447,
+    "total_score": 4.6,
+    "scores": {
+      "taste": 4.8,
+      "price": 4.2,
+      "mood": 4.4,
+      "system": 4.9,
+      "service": 4.6
+    },
+    "tags": [
+      "수제파스타",
+      "양식",
+      "런치"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r004",
+    "name": "프렌치 비스트로",
+    "category": "양식",
+    "category_raw": "프랑스음식",
+    "description": "프랑스 가정식을 현대적으로 재해석",
+    "image_url": "/images/french-bistro.jpg",
+    "review_count": 623,
+    "total_score": 4.6,
+    "scores": {
+      "taste": 4.8,
+      "price": 3.6,
+      "mood": 4.7,
+      "system": 4.8,
+      "service": 4.9
+    },
+    "tags": [
+      "프렌치",
+      "기념일",
+      "분위기"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r005",
+    "name": "달빛 카페",
+    "category": "카페",
+    "category_raw": "디저트카페",
+    "description": "분위기 좋은 디저트 카페",
+    "image_url": "/images/moonlight-cafe.jpg",
+    "review_count": 381,
+    "total_score": 4.4,
+    "scores": {
+      "taste": 4.3,
+      "price": 4.1,
+      "mood": 4.9,
+      "system": 4.2,
+      "service": 4.3
+    },
+    "tags": [
+      "디저트",
+      "카페",
+      "사진맛집"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r006",
+    "name": "한옥 밥상",
+    "category": "한식",
+    "category_raw": "백반",
+    "description": "집밥 같은 따뜻한 한식",
+    "image_url": "/images/hanok-bapsang.jpg",
+    "review_count": 734,
+    "total_score": 4.5,
+    "scores": {
+      "taste": 4.7,
+      "price": 4.4,
+      "mood": 4.3,
+      "system": 4.1,
+      "service": 4.5
+    },
+    "tags": [
+      "한식",
+      "백반",
+      "가성비"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r007",
+    "name": "마라하우스",
+    "category": "중식",
+    "category_raw": "마라탕",
+    "description": "얼얼한 국물의 진한 마라탕",
+    "image_url": "/images/mala-house.jpg",
+    "review_count": 419,
+    "total_score": 4.3,
+    "scores": {
+      "taste": 4.6,
+      "price": 4.2,
+      "mood": 3.9,
+      "system": 4.1,
+      "service": 4.0
+    },
+    "tags": [
+      "마라탕",
+      "중식",
+      "혼밥"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r008",
+    "name": "규카츠 정원",
+    "category": "일식",
+    "category_raw": "규카츠",
+    "description": "겉은 바삭하고 속은 촉촉한 규카츠",
+    "image_url": "/images/gyukatsu-garden.jpg",
+    "review_count": 566,
+    "total_score": 4.5,
+    "scores": {
+      "taste": 4.8,
+      "price": 4.1,
+      "mood": 4.4,
+      "system": 4.5,
+      "service": 4.4
+    },
+    "tags": [
+      "규카츠",
+      "일식",
+      "데이트"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r009",
+    "name": "브런치 베이",
+    "category": "카페",
+    "category_raw": "브런치카페",
+    "description": "브런치와 커피를 함께 즐기는 공간",
+    "image_url": "/images/brunch-bay.jpg",
+    "review_count": 295,
+    "total_score": 4.2,
+    "scores": {
+      "taste": 4.1,
+      "price": 3.8,
+      "mood": 4.8,
+      "system": 4.3,
+      "service": 4.2
+    },
+    "tags": [
+      "브런치",
+      "커피",
+      "카페"
+    ],
+    "area": "신촌"
+  },
+  {
+    "id": "r010",
+    "name": "분식포차",
+    "category": "한식",
+    "category_raw": "분식",
+    "description": "떡볶이와 튀김이 맛있는 분식집",
+    "image_url": "/images/bunsik-pocha.jpg",
+    "review_count": 652,
+    "total_score": 4.1,
+    "scores": {
+      "taste": 4.4,
+      "price": 4.7,
+      "mood": 3.7,
+      "system": 4.0,
+      "service": 3.9
+    },
+    "tags": [
+      "떡볶이",
+      "분식",
+      "가성비"
+    ],
+    "area": "신촌"
+  }
+]

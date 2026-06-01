@@ -15,18 +15,19 @@ complex_samples = []
 ghost_samples = []
 
 for rev in results:
-    labels = rev["labels"]
+    labels = rev.get("labels", {})
 
-    if not labels:
+    # 1. 점수가 0보다 큰 활성화된 라벨만 추출
+    found_aspects = [aspect for aspect, score in labels.items() if score > 0]
+
+    if not found_aspects:
         ghost_count += 1
         ghost_samples.append(rev["raw"])
         continue
 
     valid_count += 1
-    found_aspects = []
     
-    for aspect in labels:
-        found_aspects.append(aspect)
+    for aspect in found_aspects:
         aspect_counts[aspect] += 1
 
     if len(found_aspects) > 1:

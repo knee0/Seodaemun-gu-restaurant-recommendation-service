@@ -12,7 +12,7 @@ OUTPUT = SCORES / "bert_scores.json"
 THRESHOLDS = MODELS / "best_thresholds.json"
 
 ASPECT_LABELS = ['음식_긍정', '음식_부정', '서비스_긍정', '서비스_부정', '분위기_긍정', '분위기_부정', 
-    '가격_긍정', '가격_부정', '편의성_긍정', '편의성_부정']
+    '가격_긍정', '가격_부정']
 
 class InferenceDataset(Dataset):
     def __init__(self, data, tokenizer, max_length=256):

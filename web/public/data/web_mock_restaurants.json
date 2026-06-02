@@ -8,7 +8,7 @@
     "review_count": 891,
     "total_score": 4.6,
     "scores": {
-      "taste": 5.0,
+      "taste": 5,
       "price": 3.8,
       "mood": 4.6,
       "system": 4.9,
@@ -37,7 +37,10 @@
         "date": "2026-05-11",
         "text": "예약이 어렵지만 꼭 한번 가볼만해요. 모든 스시가 입에서 녹아요."
       }
-    ]
+    ],
+    "naver_place_id": "32876009",
+    "naver_url": "https://m.place.naver.com/restaurant/32876009/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20150901_59%2F1441042502947D9pJr_JPEG%2FSUBMIT_1408690940455_32876009.jpg"
   },
   {
     "id": "r002",
@@ -50,7 +53,7 @@
     "total_score": 4.6,
     "scores": {
       "taste": 4.9,
-      "price": 4.0,
+      "price": 4,
       "mood": 4.8,
       "system": 4.7,
       "service": 4.5
@@ -61,7 +64,10 @@
       "분위기"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/2028659657/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/2028659657/review/visitor?reviewSort=recent",
+    "naver_place_id": "2028659657",
+    "naver_url": "https://m.place.naver.com/restaurant/2028659657/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260325_103%2F17744475361927ttMl_JPEG%2F%25B3%25D7%25C0%25CC%25B9%25F6_%25B4%25EB%25C7%25A5%25C0%25CC%25B9%25CC%25C1%25F6.jpg"
   },
   {
     "id": "r003",
@@ -85,7 +91,10 @@
       "런치"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/2046483649/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/2046483649/review/visitor?reviewSort=recent",
+    "naver_place_id": "2046483649",
+    "naver_url": "https://m.place.naver.com/restaurant/2046483649/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260325_198%2F1774428877265PiJkM_JPEG%2FKakaoTalk_20260317_103246764_03.jpg"
   },
   {
     "id": "r004",
@@ -109,7 +118,10 @@
       "분위기"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/2066647870/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/2066647870/review/visitor?reviewSort=recent",
+    "naver_place_id": "2066647870",
+    "naver_url": "https://m.place.naver.com/restaurant/2066647870/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260325_218%2F17744031760619MWg4_JPEG%2F%25BA%25D2%25B4%25DF%25BF%25AC%25BE%25EE%25B1%25EF%25B5%25CE%25B1%25E2_%25B3%25D7%25C0%25CC%25B9%25F6%25C7%25C3%25B7%25B9%25C0%25CC%25BD%25BA.jpg"
   },
   {
     "id": "r005",
@@ -133,7 +145,10 @@
       "사진맛집"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/2080580825/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/2080580825/review/visitor?reviewSort=recent",
+    "naver_place_id": "2080580825",
+    "naver_url": "https://m.place.naver.com/restaurant/2080580825/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260507_68%2F1778141041892a2XqA_JPEG%2FKakaoTalk_Photo_2026-05-07-17-03-40_002.jpg"
   },
   {
     "id": "r006",
@@ -157,7 +172,10 @@
       "가성비"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/2001820349/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/2001820349/review/visitor?reviewSort=recent",
+    "naver_place_id": "2001820349",
+    "naver_url": "https://m.place.naver.com/restaurant/2001820349/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260312_173%2F17733013040204BkGo_JPEG%2FKakaoTalk_20260310_225205717_08_-_%25BA%25B9%25BB%25E7%25BA%25BB.jpg"
   },
   {
     "id": "r007",
@@ -173,7 +191,7 @@
       "price": 4.2,
       "mood": 3.9,
       "system": 4.1,
-      "service": 4.0
+      "service": 4
     },
     "tags": [
       "마라탕",
@@ -181,7 +199,10 @@
       "혼밥"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/1324251741/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/1324251741/review/visitor?reviewSort=recent",
+    "naver_place_id": "1324251741",
+    "naver_url": "https://m.place.naver.com/restaurant/1324251741/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20240711_211%2F1720682209559lAlsx_JPEG%2F04._2%25C3%25FE_%25C5%25D7%25B6%25F3%25BD%25BA_%25282%2529.jpg"
   },
   {
     "id": "r008",
@@ -205,7 +226,10 @@
       "데이트"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/2093827215/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/2093827215/review/visitor?reviewSort=recent",
+    "naver_place_id": "2093827215",
+    "naver_url": "https://m.place.naver.com/restaurant/2093827215/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260305_241%2F177267585575294tCq_JPEG%2F183.jpg"
   },
   {
     "id": "r009",
@@ -229,7 +253,10 @@
       "카페"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/37057499/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/37057499/review/visitor?reviewSort=recent",
+    "naver_place_id": "37057499",
+    "naver_url": "https://m.place.naver.com/restaurant/37057499/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20241226_12%2F1735178157689F8X76_JPEG%2FGJF01792.jpg"
   },
   {
     "id": "r010",
@@ -244,7 +271,7 @@
       "taste": 4.4,
       "price": 4.7,
       "mood": 3.7,
-      "system": 4.0,
+      "system": 4,
       "service": 3.9
     },
     "tags": [
@@ -253,6 +280,9 @@
       "가성비"
     ],
     "area": "신촌",
-    "naver_map_url": "https://m.place.naver.com/restaurant/2066106772/review/visitor?reviewSort=recent"
+    "naver_map_url": "https://m.place.naver.com/restaurant/2066106772/review/visitor?reviewSort=recent",
+    "naver_place_id": "2066106772",
+    "naver_url": "https://m.place.naver.com/restaurant/2066106772/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20250115_109%2F17369202825132WIYs_JPEG%2F%25BB%25E7%25BA%25BB_-250106_%25B3%25D7%25C0%25CC%25B9%25F6%25BD%25BA%25B8%25B6%25C6%25AE%25C7%25C3%25B7%25B9%25C0%25CC%25BD%25BA_1.jpg"
   }
 ]

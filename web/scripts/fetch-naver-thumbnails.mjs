@@ -2,7 +2,15 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_DATA_PATH = "public/data/web_mock_restaurants.json";
-const PLACE_ID_PATTERN = /\/place\/(\d+)/;
+const NAVER_ID_PATTERNS = [
+  /\/restaurant\/(\d+)/,
+  /\/place\/(\d+)/,
+  /\/entry\/place\/(\d+)/,
+  /[?&](?:placeId|entryId|id)=(\d+)/,
+];
+const BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
 const GENERIC_NAVER_IMAGE_PATTERNS = [
   "static/maps/assets/images/og-map",
   "og-map-400x200",
@@ -25,19 +33,88 @@ function decodeHtml(value) {
     .replace(/&gt;/g, ">");
 }
 
+function normalizeName(name) {
+  return String(name || "")
+    .replace(/\s+/g, "")
+    .toLowerCase();
+}
+
+function extractNaverIdFromUrl(url) {
+  for (const pattern of NAVER_ID_PATTERNS) {
+    const match = String(url || "").match(pattern);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+  return "";
+}
+
+async function loadNaverUrlMap(filePath) {
+  if (!filePath) {
+    return { byId: new Map(), byName: new Map() };
+  }
+
+  const rawJson = await readFile(path.resolve(filePath), "utf-8");
+  const rows = JSON.parse(rawJson.replace(/^\uFEFF/, ""));
+  const byId = new Map();
+  const byName = new Map();
+
+  for (const row of rows) {
+    const naverUrl = row.naver_url || row.naverUrl || row.naver_map_url || row.url || "";
+    const naverId = String(row.naverID || row.naver_id || row.naver_place_id || extractNaverIdFromUrl(naverUrl));
+    const nameKey = normalizeName(row.name);
+
+    if (naverId && naverUrl) {
+      byId.set(naverId, { naverId, naverUrl });
+    }
+    if (nameKey && naverUrl) {
+      byName.set(nameKey, { naverId, naverUrl });
+    }
+  }
+
+  return { byId, byName };
+}
+
+function mergeNaverUrl(restaurant, naverUrlMap) {
+  const ownUrl = restaurant.naver_url || restaurant.naverUrl || restaurant.naver_map_url || restaurant.url || "";
+  const ownId =
+    restaurant.naverID ||
+    restaurant.naver_id ||
+    restaurant.naver_place_id ||
+    restaurant.place_id ||
+    extractNaverIdFromUrl(ownUrl) ||
+    (/^\d+$/.test(String(restaurant.id)) ? String(restaurant.id) : "");
+
+  const matchById = ownId ? naverUrlMap.byId.get(String(ownId)) : null;
+  const matchByName = naverUrlMap.byName.get(normalizeName(restaurant.name));
+  const matched = matchById || matchByName || null;
+
+  if (!matched) {
+    return restaurant;
+  }
+
+  return {
+    ...restaurant,
+    naver_place_id: matched.naverId || ownId,
+    naver_url: matched.naverUrl,
+    naver_map_url: matched.naverUrl,
+  };
+}
+
 function getPlaceId(restaurant) {
+  if (restaurant.naverID) return String(restaurant.naverID);
+  if (restaurant.naver_id) return String(restaurant.naver_id);
   if (restaurant.naver_place_id) return String(restaurant.naver_place_id);
   if (restaurant.place_id) return String(restaurant.place_id);
   if (/^\d+$/.test(String(restaurant.id))) return String(restaurant.id);
 
-  const url = restaurant.naver_map_url || restaurant.url || "";
-  const match = url.match(PLACE_ID_PATTERN);
-  return match ? match[1] : "";
+  const url = restaurant.naver_url || restaurant.naverUrl || restaurant.naver_map_url || restaurant.url || "";
+  return extractNaverIdFromUrl(url);
 }
 
 function getNaverMapUrl(restaurant) {
-  const existingUrl = restaurant.naver_map_url || restaurant.url || "";
-  if (existingUrl.includes("map.naver.com") && PLACE_ID_PATTERN.test(existingUrl)) {
+  const existingUrl = restaurant.naver_url || restaurant.naverUrl || restaurant.naver_map_url || restaurant.url || "";
+  if (existingUrl) {
     return existingUrl;
   }
 
@@ -48,10 +125,20 @@ function getNaverMapUrl(restaurant) {
 function getThumbnailCandidateUrls(restaurant) {
   const placeId = getPlaceId(restaurant);
   const urls = [];
+  const existingUrl = restaurant.naver_url || restaurant.naverUrl || restaurant.naver_map_url || restaurant.url || "";
+
+  if (existingUrl) {
+    urls.push(existingUrl);
+    urls.push(existingUrl.replace(/\/review\/visitor.*$/, "/home"));
+    urls.push(existingUrl.replace(/\/review\/visitor.*$/, "/photo"));
+  }
 
   if (placeId) {
-    urls.push(`https://pcmap.place.naver.com/restaurant/${placeId}/home`);
     urls.push(`https://m.place.naver.com/restaurant/${placeId}/home`);
+    urls.push(`https://m.place.naver.com/restaurant/${placeId}/photo`);
+    urls.push(`https://m.place.naver.com/restaurant/${placeId}/review/visitor?reviewSort=recent`);
+    urls.push(`https://pcmap.place.naver.com/restaurant/${placeId}/home`);
+    urls.push(`https://pcmap.place.naver.com/restaurant/${placeId}/photo`);
     urls.push(`https://pcmap.place.naver.com/place/${placeId}/home`);
     urls.push(`https://m.place.naver.com/place/${placeId}/home`);
   }
@@ -89,8 +176,9 @@ function extractMetaImage(html) {
 async function fetchThumbnailFromUrl(url) {
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0",
+      "User-Agent": BROWSER_USER_AGENT,
       "Accept": "text/html,application/xhtml+xml",
+      "Referer": "https://m.place.naver.com/",
     },
   });
 
@@ -124,11 +212,14 @@ async function fetchThumbnail(urls) {
 async function main() {
   const inputPath = path.resolve(getArgValue("--input", DEFAULT_DATA_PATH));
   const outputPath = path.resolve(getArgValue("--output", inputPath));
+  const naverUrlDataPath = getArgValue("--naver-url-data", "");
   const rawJson = await readFile(inputPath, "utf-8");
   const restaurants = JSON.parse(rawJson.replace(/^\uFEFF/, ""));
+  const naverUrlMap = await loadNaverUrlMap(naverUrlDataPath);
 
   const updated = [];
-  for (const restaurant of restaurants) {
+  for (const rawRestaurant of restaurants) {
+    const restaurant = mergeNaverUrl(rawRestaurant, naverUrlMap);
     const naverUrl = getNaverMapUrl(restaurant);
     const thumbnailCandidateUrls = getThumbnailCandidateUrls(restaurant);
 

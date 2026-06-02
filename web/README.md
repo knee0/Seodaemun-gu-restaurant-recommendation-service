@@ -2,16 +2,22 @@
 
 식당 데이터에 `thumbnail_url` 또는 `image_url`이 있으면 카드와 상세 페이지에서 대표 이미지로 보여줍니다.
 
-네이버 플레이스 공유 썸네일을 사용하려면 식당 데이터에 `naver_place_id` 또는 `naver_map_url`을 넣은 뒤 아래 명령을 실행하세요.
+네이버 플레이스 공유 썸네일을 사용하려면 식당 데이터에 `naver_place_id`, `naver_url`, `naver_map_url` 중 하나를 넣은 뒤 아래 명령을 실행하세요.
 
 ```bash
 npm run fetch:thumbnails
 ```
 
-기본 입력/출력 파일은 `public/data/web_mock_restaurants.json`입니다. 다른 파일을 쓰려면 아래처럼 지정할 수 있습니다.
+별도로 정리한 네이버 모바일 URL 목록이 있으면 `--naver-url-data` 옵션으로 함께 넘길 수 있습니다.
 
 ```bash
-node scripts/fetch-naver-thumbnails.mjs --input public/data/web_mock_restaurants.json --output public/data/web_mock_restaurants.json
+npm run fetch:thumbnails -- --naver-url-data "네이버 모바일 URL JSON 경로"
+```
+
+입력/출력 파일을 직접 지정하려면 아래처럼 실행합니다.
+
+```bash
+node scripts/fetch-naver-thumbnails.mjs --input public/data/web_mock_restaurants.json --output public/data/web_mock_restaurants.json --naver-url-data "네이버 모바일 URL JSON 경로"
 ```
 
 # React + Vite

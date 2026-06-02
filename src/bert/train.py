@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import numpy as np
 import torch
+import torch.nn as nn
 from src.utils import MODELS, DATASET, load_json, save_json
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, f1_score, hamming_loss
@@ -19,8 +20,7 @@ VALIDATE = DATASET / "golden_val.json"
 RESULT = MODELS / "./results"
 MODEL = MODELS / "./models"
 
-ASPECT_LABELS = ['음식_긍정', '음식_부정', '서비스_긍정', '서비스_부정', '분위기_긍정', '분위기_부정', 
-    '가격_긍정', '가격_부정', '편의성_긍정', '편의성_부정']
+ASPECT_LABELS = ['음식_긍정', '음식_부정', '서비스_긍정', '서비스_부정', '분위기_긍정', '분위기_부정', '가격_긍정', '가격_부정']
 NUM_LABELS = len(ASPECT_LABELS)
 
 LABEL_TO_ID = {}
@@ -30,16 +30,24 @@ for idx, label in enumerate(ASPECT_LABELS):
     ID_TO_LABEL[idx] = label
 
 
-def multi_label_vector(raw_data):  # is_val 파라미터도 필요 없음!
+def multi_label_vector(raw_data):
     processed = []
     for item in raw_data:
         text = item.get("raw", "")
         labels = item.get("labels", [])
         
         label_vector = [0.0] * NUM_LABELS
-        for idx, label in enumerate(ASPECT_LABELS):
-            if label in labels:
-                label_vector[idx] = 1.0
+
+        # If labels is a dictionary (Soft labels from Train Lexicon)
+        if isinstance(labels, dict):
+            for idx, label in enumerate(ASPECT_LABELS):
+                label_vector[idx] = float(labels.get(label, 0.0))
+                
+        # If labels is a list (Hard labels from Golden Val)
+        else:
+            for idx, label in enumerate(ASPECT_LABELS):
+                if label in labels:
+                    label_vector[idx] = 1.0
 
         processed.append({"text": text, "labels": label_vector})
 
@@ -47,7 +55,7 @@ def multi_label_vector(raw_data):  # is_val 파라미터도 필요 없음!
 
 
 def tokenize_and_format(batch):
-    tokenized = tokenizer(batch["text"], truncation=True, padding=False, max_length=256)
+    tokenized = tokenizer(batch["text"], truncation=True, padding=False, max_length=128)
     tokenized["labels"] = batch["labels"]
     return tokenized
 
@@ -73,23 +81,18 @@ def compute_metrics(p: EvalPrediction):
 
 
 def find_best_thresholds(trainer, val_dataset):
-    
-    # 모델 예측값 가져오기 (Logits)
     predictions = trainer.predict(val_dataset)
     logits = predictions.predictions[0] if isinstance(predictions.predictions, tuple) else predictions.predictions
     labels = predictions.label_ids
 
-    # Sigmoid로 확률 변환
     probs = 1 / (1 + np.exp(-logits))
-    
     best_thresholds = {}
     
-    # 카테고리마다 0.05 단위로 테스트
     for idx, label_name in enumerate(ASPECT_LABELS):
         best_f1 = 0.0
         best_th = 0.5
         
-        for th in np.arange(0.1, 0.9, 0.05):
+        for th in np.arange(0.01, 0.99, 0.01):
             preds = (probs[:, idx] > th).astype(int)
             f1 = f1_score(labels[:, idx], preds, zero_division=0)
             
@@ -103,6 +106,28 @@ def find_best_thresholds(trainer, val_dataset):
     save_json(best_thresholds, MODELS / "best_thresholds.json")
         
     return best_thresholds
+
+
+class CustomTrainer(Trainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Instantiate the tensor ONCE during initialization
+        self._pos_weight = torch.tensor([1.0, 4.0, 1.3, 6.5, 1.3, 8.5, 2.5, 9.0])
+
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        labels = inputs.get("labels")
+        outputs = model(**inputs)
+        logits = outputs.get("logits")
+        
+        if self._pos_weight.device != logits.device:
+            self._pos_weight = self._pos_weight.to(logits.device)
+        
+        loss_fct = nn.BCEWithLogitsLoss(pos_weight=self._pos_weight)
+        loss = loss_fct(logits, labels.float())
+        
+        return (loss, outputs) if return_outputs else loss
+
 
 
 def train_model():
@@ -137,11 +162,11 @@ def train_model():
         output_dir = RESULT,
         eval_strategy = "epoch",
         save_strategy = "epoch",
-        learning_rate = 1e-5,
-        per_device_train_batch_size = 4,
+        learning_rate = 2e-5,
+        per_device_train_batch_size = 8,
         gradient_accumulation_steps = 4,
         per_device_eval_batch_size = 8,
-        num_train_epochs = 3,
+        num_train_epochs = 4,
         weight_decay = 0.01,
         logging_steps = 50,
         save_total_limit = 2,
@@ -149,12 +174,12 @@ def train_model():
         dataloader_num_workers = 0,
         report_to = "none",
         load_best_model_at_end = True,
-        metric_for_best_model = "eval_loss",
-        greater_is_better = False,
+        metric_for_best_model = "eval_macro_f1",
+        greater_is_better = True,
         remove_unused_columns = False
     )
 
-    trainer = Trainer(
+    trainer = CustomTrainer(
         model = model,
         args = training_args,
         train_dataset = train_dataset,
@@ -170,7 +195,6 @@ def train_model():
 
     trainer.save_model(MODEL / "kcelectra_multilabel")
     tokenizer.save_pretrained(MODEL / "kcelectra_multilabel")
-
 
 def main():
     train_model()

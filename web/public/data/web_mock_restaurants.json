@@ -1,14 +1,14 @@
 [
   {
     "id": "r001",
-    "name": "스시 마스터",
+    "name": "때때",
     "category": "일식",
     "description": "신선한 재료로 만드는 오마카세",
     "image_url": "/images/sushi-master.jpg",
     "review_count": 891,
     "total_score": 4.6,
     "scores": {
-      "taste": 5.0,
+      "taste": 5,
       "price": 3.8,
       "mood": 4.6,
       "system": 4.9,
@@ -16,7 +16,7 @@
     },
     "phone": "02-3456-7890",
     "address": "서울특별시 서대문구 신촌로 123",
-    "naver_map_url": "https://map.naver.com",
+    "naver_map_url": "https://m.place.naver.com/restaurant/32876009/review/visitor?reviewSort=recent",
     "kakao_map_url": "https://map.kakao.com",
     "reviews": [
       {
@@ -37,11 +37,14 @@
         "date": "2026-05-11",
         "text": "예약이 어렵지만 꼭 한번 가볼만해요. 모든 스시가 입에서 녹아요."
       }
-    ]
+    ],
+    "naver_place_id": "32876009",
+    "naver_url": "https://m.place.naver.com/restaurant/32876009/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20150901_59%2F1441042502947D9pJr_JPEG%2FSUBMIT_1408690940455_32876009.jpg"
   },
   {
     "id": "r002",
-    "name": "이탈리안 키친",
+    "name": "프레퍼스 다이어트 푸드 이대점",
     "category": "양식",
     "category_raw": "파스타,피자",
     "description": "정통 이탈리안 파스타와 피자",
@@ -50,7 +53,7 @@
     "total_score": 4.6,
     "scores": {
       "taste": 4.9,
-      "price": 4.0,
+      "price": 4,
       "mood": 4.8,
       "system": 4.7,
       "service": 4.5
@@ -60,11 +63,15 @@
       "피자",
       "분위기"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2028659657/review/visitor?reviewSort=recent",
+    "naver_place_id": "2028659657",
+    "naver_url": "https://m.place.naver.com/restaurant/2028659657/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260325_103%2F17744475361927ttMl_JPEG%2F%25B3%25D7%25C0%25CC%25B9%25F6_%25B4%25EB%25C7%25A5%25C0%25CC%25B9%25CC%25C1%25F6.jpg"
   },
   {
     "id": "r003",
-    "name": "파스타 공방",
+    "name": "뉴욕러브베이글",
     "category": "양식",
     "category_raw": "이탈리아음식",
     "description": "수제 파스타의 진수",
@@ -83,11 +90,15 @@
       "양식",
       "런치"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2046483649/review/visitor?reviewSort=recent",
+    "naver_place_id": "2046483649",
+    "naver_url": "https://m.place.naver.com/restaurant/2046483649/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260325_198%2F1774428877265PiJkM_JPEG%2FKakaoTalk_20260317_103246764_03.jpg"
   },
   {
     "id": "r004",
-    "name": "프렌치 비스트로",
+    "name": "육회바른연어 이대역점",
     "category": "양식",
     "category_raw": "프랑스음식",
     "description": "프랑스 가정식을 현대적으로 재해석",
@@ -106,11 +117,15 @@
       "기념일",
       "분위기"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2066647870/review/visitor?reviewSort=recent",
+    "naver_place_id": "2066647870",
+    "naver_url": "https://m.place.naver.com/restaurant/2066647870/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260325_218%2F17744031760619MWg4_JPEG%2F%25BA%25D2%25B4%25DF%25BF%25AC%25BE%25EE%25B1%25EF%25B5%25CE%25B1%25E2_%25B3%25D7%25C0%25CC%25B9%25F6%25C7%25C3%25B7%25B9%25C0%25CC%25BD%25BA.jpg"
   },
   {
     "id": "r005",
-    "name": "달빛 카페",
+    "name": "가에 서울(GaE Seoul)",
     "category": "카페",
     "category_raw": "디저트카페",
     "description": "분위기 좋은 디저트 카페",
@@ -129,11 +144,15 @@
       "카페",
       "사진맛집"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2080580825/review/visitor?reviewSort=recent",
+    "naver_place_id": "2080580825",
+    "naver_url": "https://m.place.naver.com/restaurant/2080580825/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260507_68%2F1778141041892a2XqA_JPEG%2FKakaoTalk_Photo_2026-05-07-17-03-40_002.jpg"
   },
   {
     "id": "r006",
-    "name": "한옥 밥상",
+    "name": "육해담",
     "category": "한식",
     "category_raw": "백반",
     "description": "집밥 같은 따뜻한 한식",
@@ -152,11 +171,15 @@
       "백반",
       "가성비"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2001820349/review/visitor?reviewSort=recent",
+    "naver_place_id": "2001820349",
+    "naver_url": "https://m.place.naver.com/restaurant/2001820349/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260312_173%2F17733013040204BkGo_JPEG%2FKakaoTalk_20260310_225205717_08_-_%25BA%25B9%25BB%25E7%25BA%25BB.jpg"
   },
   {
     "id": "r007",
-    "name": "마라하우스",
+    "name": "컾핖짚 본점",
     "category": "중식",
     "category_raw": "마라탕",
     "description": "얼얼한 국물의 진한 마라탕",
@@ -168,18 +191,22 @@
       "price": 4.2,
       "mood": 3.9,
       "system": 4.1,
-      "service": 4.0
+      "service": 4
     },
     "tags": [
       "마라탕",
       "중식",
       "혼밥"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/1324251741/review/visitor?reviewSort=recent",
+    "naver_place_id": "1324251741",
+    "naver_url": "https://m.place.naver.com/restaurant/1324251741/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20240711_211%2F1720682209559lAlsx_JPEG%2F04._2%25C3%25FE_%25C5%25D7%25B6%25F3%25BD%25BA_%25282%2529.jpg"
   },
   {
     "id": "r008",
-    "name": "규카츠 정원",
+    "name": "마닐로우(manilraw)",
     "category": "일식",
     "category_raw": "규카츠",
     "description": "겉은 바삭하고 속은 촉촉한 규카츠",
@@ -198,11 +225,15 @@
       "일식",
       "데이트"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2093827215/review/visitor?reviewSort=recent",
+    "naver_place_id": "2093827215",
+    "naver_url": "https://m.place.naver.com/restaurant/2093827215/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260305_241%2F177267585575294tCq_JPEG%2F183.jpg"
   },
   {
     "id": "r009",
-    "name": "브런치 베이",
+    "name": "소오",
     "category": "카페",
     "category_raw": "브런치카페",
     "description": "브런치와 커피를 함께 즐기는 공간",
@@ -221,11 +252,15 @@
       "커피",
       "카페"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/37057499/review/visitor?reviewSort=recent",
+    "naver_place_id": "37057499",
+    "naver_url": "https://m.place.naver.com/restaurant/37057499/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20241226_12%2F1735178157689F8X76_JPEG%2FGJF01792.jpg"
   },
   {
     "id": "r010",
-    "name": "분식포차",
+    "name": "푸라닭 신촌",
     "category": "한식",
     "category_raw": "분식",
     "description": "떡볶이와 튀김이 맛있는 분식집",
@@ -236,7 +271,7 @@
       "taste": 4.4,
       "price": 4.7,
       "mood": 3.7,
-      "system": 4.0,
+      "system": 4,
       "service": 3.9
     },
     "tags": [
@@ -244,6 +279,10 @@
       "분식",
       "가성비"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2066106772/review/visitor?reviewSort=recent",
+    "naver_place_id": "2066106772",
+    "naver_url": "https://m.place.naver.com/restaurant/2066106772/review/visitor?reviewSort=recent",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20250115_109%2F17369202825132WIYs_JPEG%2F%25BB%25E7%25BA%25BB_-250106_%25B3%25D7%25C0%25CC%25B9%25F6%25BD%25BA%25B8%25B6%25C6%25AE%25C7%25C3%25B7%25B9%25C0%25CC%25BD%25BA_1.jpg"
   }
 ]

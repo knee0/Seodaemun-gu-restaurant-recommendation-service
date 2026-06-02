@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import RestaurantImage from "./RestaurantImage";
 import StarRating from "./StarRating";
 
 function ResultRestaurantCard({ restaurant }) {
@@ -18,10 +19,7 @@ function ResultRestaurantCard({ restaurant }) {
       className="restaurant-card result-card clickable-card"
       onClick={() => navigate(`/restaurants/${restaurant.id}`)}
     >
-      <div className="restaurant-image-placeholder"> 
-        {/*TODO*/}
-        이미지
-      </div>
+      <RestaurantImage restaurant={restaurant} />
 
       <div className="restaurant-card-body">
         <div className="restaurant-card-header">

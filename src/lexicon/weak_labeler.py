@@ -1,78 +1,116 @@
 import numpy as np
+from kiwipiepy import Kiwi
 from src.utils import PREP, LEXICON, SCORES, load_json, save_json
 
 INPUT = PREP / "preprocessed.json"
 ASPECT_LEXICON = LEXICON / "aspect_lexicon.json"
 SENTIMENT_LEXICON = LEXICON / "sentiment_lexicon.json"
+SPECIFIC_MAP = LEXICON / "specific_sentiment_map.json"
 OUTPUT = SCORES / "lexicon_scores.json"
 
-# 감정 단어 주위를 얼마나 살펴볼 것인지 정의합니다. (3: 주위의 세 단어)
-DEFAULT_WINDOW_SIZE = 5
 
+# 감정 단어 주위를 얼마나 살펴볼 것인지 정의합니다. (3: 주위의 세 단어)
+DEFAULT_WINDOW_SIZE = 3
 
 # 감정 단어가 있으면, 단어의 '감정 점수'를 가장 가까운 카테고리 단어의 '카테고리'에 부여합니다.
-def find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon,
-                           find_aspect, window_size=DEFAULT_WINDOW_SIZE):
+def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspect,
+    specific_sentiment_map, kiwi, window_size=DEFAULT_WINDOW_SIZE):
 
-    # 감정 단어의 위치(index)를 저장.
-    sentiment_positions = []
+    kiwi_sents = kiwi.split_into_sents(raw_text)
+    review_aspect_scores = {aspect: [] for aspect in aspect_lexicon.keys()}
 
-    # 문장에서 감정 단어, 카테고리 단어의 위치(index) 찾기.
-    for idx, word in enumerate(words):
-        if word in sentiment_lexicon:
-            sentiment_positions.append(idx)
+    for sent in kiwi_sents:
+        tokens = kiwi.tokenize(sent.text)
+        sent_words = [t.form for t in tokens]
 
-    aspect_scores = {aspect: [] for aspect in aspect_lexicon.keys()}
+        boundary_indices = {
+            i for i, t in enumerate(tokens)
+            if (t.form in ['근데', '다만', '지만'])
+        }
 
-    for idx in sentiment_positions:
-        word = words[idx]
-        score = sentiment_lexicon[word]
+        # start, end 사이에 절이 달라지는지 검사합니다.
+        def is_blocked(start, end):
+            s, e = min(start, end), max(start, end)
+            return any(s <= b <= e for b in boundary_indices)
 
-        # 감정 단어가 카테고리 단어라면, 해당 카테고리에 바로 연결.
-        if word in {"맛있", "맛나", "맛없", "존맛"}:
-            aspect_scores["음식"].append(score)
-            continue
+        last_seen_aspect = None
+        last_seen_aspect_idx = -1
+        sentiment_positions = [idx for idx, w in enumerate(sent_words) if w in sentiment_lexicon]
 
-        if word in {"싸", "비싸"}:
-            aspect_scores["가격"].append(score)
-            continue
+        for idx in sentiment_positions:
+            token = tokens[idx]
+            word = sent_words[idx]
+            score = sentiment_lexicon[word]
 
-        # 다른 감정 단어는 가장 가까운 카테고리 단어의 카테고리와 연결.
-        closest_aspects = []
-        for k in range(1, window_size + 1):
-            left_idx = idx - k
-            right_idx = idx + k
-            left_find = (left_idx >= 0) and words[left_idx] in find_aspect
-            right_find = (right_idx < len(words)) and words[right_idx] in find_aspect
-
-            # k 주위의 단어까지 발견되지 않았다면, 다음 단어 탐색
-            if not (left_find or right_find):
+            # 감정 점수가 너무 낮은 단어는 패스합니다.
+            if abs(score) < 0.15:
                 continue
 
-            # 발견된 경우, 발견된 단어의 카테고리에 점수 부여.
-            if left_find:
-                aspect = find_aspect[words[left_idx]]
-                aspect_scores[aspect].append(score)
-            if right_find:
-                aspect = find_aspect[words[right_idx]]
-                aspect_scores[aspect].append(score)
-            
-            # 발견된 경우, 거기서 탐색 종료.
-            break
+            # 반전 표현이 나오면 감정을 뒤집습니다. (긍정 -> 부정)
+            neg_left, neg_right = False, False
+            for i in range(max(0, idx - 3), idx):
+                if tokens[i].form in ["못", "아니"] or (tokens[i].form == "안" and tokens[i].tag == "MAG"):
+                    neg_left = True
+            # 뒤에 '않다', '없다' 검사
+            for i in range(idx + 1, min(len(tokens), idx + 5)):
+                if tokens[i].form in ["않", "없", "덜"]:
+                    neg_right = True
+
+            is_negated = neg_left or neg_right
+            if is_negated:
+                score = -score
+
+            # 복합 사전에 속하는 단어인 경우, 해당 속성을 바로 부여합니다.
+            if word in specific_sentiment_map:
+                aspect, polarity = specific_sentiment_map[word].split('_')
+                assigned_score = abs(score) if polarity == "긍정" else -abs(score)
+
+                if is_negated:
+                    assigned_score = -assigned_score
+
+                review_aspect_scores[aspect].append(assigned_score)
+                last_seen_aspect = aspect
+                last_seen_aspect_idx = idx
+                continue
 
 
-    # 여기까지 코멘트 작성.
-    aspect_sentiment = []
+            # 일반 감정 단어의 경우, 가장 가까운 속성 단어를 탐색합니다.
+            aspect_found = False
+            for k in range(1, window_size + 1):
+                for near_idx in [idx - k, idx + k]:
+                    if 0 <= near_idx < len(sent_words) and sent_words[near_idx] in find_aspect:
+                        if not is_blocked(idx, near_idx):
+                            aspect = find_aspect[sent_words[near_idx]]
+                            review_aspect_scores[aspect].append(score)
+                            last_seen_aspect = aspect
+                            last_seen_aspect_idx = near_idx
+                            aspect_found = True
+                if aspect_found:
+                    break
+
+
+            # 문장 내에서 마지막으로 발견된 속성을 last_seen_aspect에 저장합니다. 
+            # 이번 감성 단어 주변에 속성 단어가 없었다면, 이전 속성에 감정 점수를 부여합니다.
+            if not aspect_found and last_seen_aspect:
+                # 중간에 절 분리 단어가 있으면, 해당 속성으로 연결하지 않습니다.
+                if not is_blocked(last_seen_aspect_idx, idx):
+                    review_aspect_scores[last_seen_aspect].append(score)
+                    last_seen_aspect = None
+                else:
+                    last_seen_aspect = None
+
+
+    # 위의 과정을 거치면, 리뷰마다 속성별로 다양한 점수를 갖게 됩니다.
+    # 예) 음식: [0.7, 0.5, 0.6], 서비스: [0.1, -0.4, -0.3]
+    # 해당 점수의 평균값으로 리뷰의 속성별 감정 점수를 계산합니다.
+    aspect_sentiment = {}
     for aspect in aspect_lexicon.keys():
-        if not aspect_scores[aspect]: continue
-        mean_score = round(np.mean(aspect_scores[aspect]), 4)
+        scores = review_aspect_scores[aspect]
+        pos_scores = [s for s in scores if s > 0]
+        neg_scores = [s for s in scores if s < 0]
 
-        if mean_score >= 0.5:
-            aspect_sentiment.append(f"{aspect}_긍정")
-        elif mean_score <= -0.2:
-            aspect_sentiment.append(f"{aspect}_부정")
-        else:
-            pass
+        aspect_sentiment[f"{aspect}_긍정"] = round(np.mean(pos_scores), 4) if pos_scores else 0.0
+        aspect_sentiment[f"{aspect}_부정"] = round(abs(np.mean(neg_scores)), 4) if neg_scores else 0.0
 
     return aspect_sentiment
 
@@ -81,28 +119,27 @@ def run_absa():
     reviews = load_json(INPUT)
     raw_aspect_lexicon = load_json(ASPECT_LEXICON)
     raw_sentiment_lexicon = load_json(SENTIMENT_LEXICON)
+    specific_sentiment_map = load_json(SPECIFIC_MAP)
 
     # 사용하기 편한 형태로 .json 데이터 조작하기
     aspect_lexicon = {aspect: set(words) for aspect, words in raw_aspect_lexicon.items()}
     sentiment_lexicon = {word: float(score) for word, score in raw_sentiment_lexicon.items()}
-
-    # Aspect Lexicon은 '속성: 단어' 형태. ('맛': 맛있, 맛없, ...)
-    # '단어 -> 속성' 관계를 빨리 찾기 위해 역순서 사전 만들기 ('맛있': 맛, '맛없': 맛, ...)
-    find_aspect = {}
-    for aspect, words in aspect_lexicon.items():
-        for word in words:
-            find_aspect[word] = aspect
+    find_aspect = {word: aspect for aspect, words in aspect_lexicon.items() for word in words}
+    kiwi = Kiwi()
 
     final_results = []
     for rev in reviews:
-        tokens = rev["tokens"]
-        words = [token.partition('/')[0] for token in tokens]
-        aspect_sentiment = find_aspect_sentiment(words, aspect_lexicon, sentiment_lexicon, find_aspect)
+        raw_text = rev["raw"]
+
+        aspect_sentiment = find_aspect_sentiment(
+            raw_text=raw_text, aspect_lexicon=aspect_lexicon, sentiment_lexicon=sentiment_lexicon, 
+            find_aspect=find_aspect, specific_sentiment_map=specific_sentiment_map, kiwi=kiwi
+        )
 
         final_results.append({
             "rev_id": rev["rev_id"],
             "raw": rev["raw"],
-            "tokens": tokens,
+            "tokens": rev["tokens"],
             "labels": aspect_sentiment,
         })
 

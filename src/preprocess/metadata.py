@@ -1,9 +1,8 @@
-import json
 from math import exp, log, log1p
 from datetime import datetime, timezone
-from src.utils import RAW_DATA, PREP, load_json, save_json
+from src.utils import RAW, PREP, load_json, save_json
 
-INPUT = RAW_DATA
+INPUT = RAW / "naver_reviews_franchise.json"
 OUTPUT = PREP / "metadata.json"
 
 # Recency: 오래된 리뷰의 영향력 감소.
@@ -12,11 +11,11 @@ RECENCY_PARAM = 1000
 
 # Activity: 작성한 리뷰가 많으면 영향력 증가.
 # Loyalty: 식당 방문 횟수가 많으면 영향력 증가.
-# 최대 영향력 1.4
+# 최대 영향력 1.2
 # LIMIT은 상위 95% 값으로 설정 (scripts/metadata_dist 참조)
-ACTIVITY_PARAM = 0.4
+ACTIVITY_PARAM = 0.2
 ACTIVITY_LIMIT = 1914
-LOYALTY_PARAM = 0.1
+LOYALTY_PARAM = 0.05
 LOYALTY_LIMIT = 5
 
 
@@ -35,11 +34,11 @@ def calculate_weight(visit_time, review_date_flag, review_count, visit_count):
     # 최소 영향력은 0.1로 설정합니다.
     recency = max(0.1, exp(power))
 
-    # LIMIT 이상의 리뷰 작성 수는 LIMIT과 같도록 처리합니다. (최대 영향력 1.4로 제한)
+    # LIMIT 이상의 리뷰 작성 수는 LIMIT과 같도록 처리합니다. (최대 영향력 1.2로 제한)
     capped_rc = min(review_count, ACTIVITY_LIMIT)
     activity = 1 + ACTIVITY_PARAM * (log(capped_rc) / log(ACTIVITY_LIMIT))
 
-    # LIMIT 이상의 식당 방문 수는 LIMIT과 같도록 처리합니다. (최대 영향력 1.4로 제한)
+    # LIMIT 이상의 식당 방문 수는 LIMIT과 같도록 처리합니다. (최대 영향력 1.2로 제한)
     capped_vc = min(visit_count, LOYALTY_LIMIT) - 1
     loyalty = 1 + LOYALTY_PARAM * capped_vc
 
@@ -53,16 +52,24 @@ def make_metadata(data):
         # 케이크 주문제작 매장이 보여서 제외합니다.
         if rid == "1572782359":
             continue
+
+        # 같은 식당 내 중복 제거.
+        seen_raw = set()
         
         metadata = restaurant.get("metadata", {})
+        franchise = restaurant.get("franchise_classification", {})
+        time_period = restaurant.get("period_recommendation", {})
 
-        # 식당 이름과 카테고리(한식/일식 등).
+        # 식당 이름, 카테고리(한식/일식 등), 프랜차이즈 여부, 점심/저녁 추천
         res_data = {
             "name": metadata.get("name"),
-            "category": metadata.get("category")
+            "category": metadata.get("category"),
+            "category": metadata.get("category_raw"),
+            "franchinse": franchise.get("is_franchise"),
+            "time_period": time_period.get("label")
         }
 
-        # 리뷰에 대한 정보(리뷰 ID, 방문 일자, 작성 리뷰 개수, 방문 횟수)와 총 영향력.
+        # 리뷰의 총 영향력.
         rev_datas = []
         for idx, review in enumerate(restaurant.get("reviews", [])):
             # preprocessed에서 만든 리뷰 ID와 같은 형식.
@@ -89,9 +96,6 @@ def make_metadata(data):
 
             rev_datas.append({
                 "rev_id": rev_id,
-                "visit_time": visit_time,
-                "review_count": review_count,
-                "visit_count": visit_count,
                 "weight": weight
             })
 

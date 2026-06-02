@@ -24,22 +24,28 @@ def main():
 
     single_food = []
     other_reviews = []
+    LEX_THRESH = 0.2
 
     for rev in lexicon_results:
         if rev.get("rev_id") in golden_set:
             continue
             
-        labels = rev.get("labels", [])
+        labels = rev.get("labels", {})
+        cleaned_labels = {label: (1.0 if score >= LEX_THRESH else 0.0) for label, score in labels.items()}
 
-        if not labels:
+        total_score = sum(cleaned_labels.values())
+        if total_score == 0:
             continue
         
-        if labels == ["음식_긍정"]:
+        food_pos_score = cleaned_labels.get("음식_긍정", 0.0)
+        rev["labels"] = cleaned_labels
+
+        if food_pos_score > 0 and total_score == food_pos_score:
             single_food.append(rev)
         else:
             other_reviews.append(rev)
 
-    keep_count = int(len(single_food) * 0.15)
+    keep_count = int(len(single_food) * 0.2)
     sampled_single_food = random.sample(single_food, keep_count)
 
     result = sampled_single_food + other_reviews

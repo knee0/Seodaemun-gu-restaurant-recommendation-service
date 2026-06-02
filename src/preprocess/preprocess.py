@@ -1,4 +1,3 @@
-import json
 import re
 from kiwipiepy import Kiwi
 from src.utils import RAW_DATA, PREP, load_json, save_json
@@ -9,17 +8,12 @@ OUTPUT = PREP / "preprocessed.json"
 kiwi = Kiwi()
 
 def normalize(text):
-    # 여러 개의 자음 하나로 줄이기 (ㅋㅋㅋㅋ, ㅠㅠㅠ -> ㅋㅋ, ㅠㅠ)
-    text = re.sub(r"([ㄱ-ㅎㅏ-ㅣ])\1+", r"\1\1", text)
-
     # 한글, 영어, 숫자, [.,!?~] 외의 특수문자 제거.
     text = re.sub(r"[^가-힣A-Za-z0-9\s.,!?~]", "", text)
 
-    # 문장부호 주위 불필요한 공백 제거.
-    text = re.sub(r"\s+([.,!?~])", r"\1", text)
+    # 여러 개의 자음 하나로 줄이기 (ㅋㅋㅋㅋ, ㅠㅠㅠ -> ㅋㅋ, ㅠㅠ)
+    text = re.sub(r"([ㄱ-ㅎㅏ-ㅣ])\1+", r"\1\1", text)
 
-    # 여러 공백 하나로 줄이기.
-    text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
@@ -42,8 +36,12 @@ def preprocess(data):
         if rid == "1572782359":
             continue
 
+        # 같은 식당 내 중복 리뷰를 검출합니다.
+        seen_raw = set()
+
         for idx, review in enumerate(restaurant.get("reviews", [])):
-            # 리뷰마다 고유 ID 저장: 이후 메타데이터와 연결할 때 활용.
+
+            # 메타데이터와 연결하기 위해, 리뷰마다 고유 ID를 지정합니다.
             rev_id = f"{rid}_{idx}"
 
             raw = review.get("content", "").strip()
@@ -54,6 +52,11 @@ def preprocess(data):
 
             if is_english(text):
                 continue
+
+            if text in seen_raw:
+                continue
+
+            seen_raw.add(text)
 
             review_tokens = kiwi.tokenize(text)
             dataset.append({

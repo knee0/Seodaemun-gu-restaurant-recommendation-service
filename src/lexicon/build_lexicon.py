@@ -18,10 +18,10 @@ OUTPUT_SPEC = LEXICON / "specific_sentiment_map.json"
 # 세 종류에 속하지 않는 단어는 사전에 추가되지 않도록 불용어 처리합니다. 
 stopwords = {
     "빨갛", "오용", "미션", "내년", "성비", "팀플", "시크", "빔", "커리큘럼", "기질", "이자카야", 
-    "그자리", "백색소음", "우산", "안경", "학식", "하이디라오", "대학가", "여름", "겨울", "술집",
-    "스끼다시", "스키야끼", "스키야키", "어둡", "어둑", "북적", "그러", "닦", "내려놓", "이러", "물어보",
+    "그자리", "백색소음", "우산", "안경", "학식", "하이디라오", "대학가", "겨울",
+    "스끼다시", "스키야끼", "스키야키", "그러", "닦", "내려놓", "이러", "물어보",
     "여성", "원형", "대학로", "쏘", "뵈", "진쩌", "초반", "상권", "시대", "보장", "고치", "고르",
-    "요즘", "초반", "양도", "칭따오", "동동주", "콘센트", "치즈플래터"
+    "요즘", "초반", "양도", "칭따오", "동동주", "콘센트", "치즈플래터", "딜러"
 }
 
 
@@ -53,7 +53,7 @@ w2v_model = Word2Vec(
     vector_size=300,
     window=7,
     sg=1,
-    min_count=2,
+    min_count=3,
     seed=42,
 )
 
@@ -64,7 +64,7 @@ w2v_model = Word2Vec(
 
 # 감정 기준 단어 (속성 단어와 결합)
 general_pos_seeds = [
-    "좋", "괜찮", "잘", "추천", "재밌", "기쁘", "즐기", "반하", "짱", "최고",
+    "좋", "괜찮", "잘", "추천", "재밌", "기쁘", "즐기", "반하", "짱", "최고", "어울리"
 ]
 general_neg_seeds = [
     "나쁘", "싫", "별로", "그닥", "최악", "아쉽", "당황", "실망", "불만", "불편", "불쾌", "번거롭"
@@ -72,7 +72,7 @@ general_neg_seeds = [
 
 # 속성 & 감정 복합 단어 (단독으로 속성 + 감정을 결정하는 단어)
 anchor_pos_seeds = {
-    "음식_긍정": ["맛있", "맛나", "존맛", "맛집"], 
+    "음식_긍정": ["맛있", "맛나", "맛집"], 
     "서비스_긍정": ["친절", "빠르", "응대"], 
     "분위기_긍정": ["깔끔", "감성", "쾌적", "예쁘"], 
     "가격_긍정": ["저렴하", "착하", "싸"]
@@ -80,28 +80,29 @@ anchor_pos_seeds = {
 
 anchor_neg_seeds = {
     "음식_부정": ["맛없", "비리", "잡내", "느끼하"], 
-    "서비스_부정": ["불친절", "비매너", "무성의", "퉁명", "늦"], 
-    "분위기_부정": ["비좁", "악취", "시끄럽", "더럽"], 
+    "서비스_부정": ["불친절", "건성", "눈치", "퉁명", "늦"], 
+    "분위기_부정": ["악취", "혼잡", "시끄럽", "더럽"], 
     "가격_부정": ["비싸", "아깝", "부담"]
 }
 
 direct_pos_seeds = {
     "음식_긍정": ["배부르", "푸짐하", "신선하", "든든하", "가득", "듬뿍"],
     "서비스_긍정": ["빨리", "금방", "구워주", "리필", "센스"],
-    "분위기_긍정": ["편하", "넓", "이쁘", "멋지", "멋있"],
-    "가격_긍정": ["단돈"]
+    "분위기_긍정": ["넓", "이쁘"],
+    "가격_긍정": ["단돈", "혜자"]
 }
 direct_neg_seeds = {
     "음식_부정": ["딱딱", "느끼하", "식은", "탄", "퍽퍽하", "밍밍하", "눅눅하", "탄내"],
-    "서비스_부정": ["독촉", "눈치", "무시", "건성", "노려보", "방치", "싸가지", "한숨", "황당", "유도리"],
-    "분위기_부정": ["답답", "협소", "요란", "먼지", "시끌벅적", "좁", "미끄럽", "열악", "비좁", "혼잡", "시끄럽", "더럽", "지저분", "하수구"],
-    "가격_부정": []
+    "서비스_부정": ["독촉", "무시", "비매너", "노려보", "방치", "싸가지", "한숨", "황당",
+                    "지르", "화내"],
+    "분위기_부정": ["지저분"],
+    "가격_부정": ["오르"],
 }
 
 
 
 # 모델이 학습한 단어(리뷰에 2회 이상 존재한 단어)만 저장합니다.
-# 모델이 학습한 단어여야 유의어를 찾는데 활용할 수 있기 때문입니다.
+# Word2Vec은 학습한 단어만 활용할 수 있기 때문입니다.
 valid_gen_pos = [w for w in general_pos_seeds if w in w2v_model.wv]
 valid_gen_neg = [w for w in general_neg_seeds if w in w2v_model.wv]
 
@@ -128,10 +129,10 @@ all_anchor_groups = {**anchor_pos_seeds, **anchor_neg_seeds}
 
 
 # 동사, 형용사만 수집합니다.
-sentiment_tags = {"VV", "VA"}
+sentiment_tags = {"VA"}
 
 # 해당 기준치보다 유사도가 높은 단어만 수집합니다.
-SPECIFIC_EXPANSION_THRESHOLD = 0.6
+SPECIFIED_SENTIMENT_THRESHOLD = 0.6
 
 for group_name, seeds in all_anchor_groups.items():
     valid_seeds = [s for s in seeds if s in w2v_model.wv]
@@ -140,7 +141,7 @@ for group_name, seeds in all_anchor_groups.items():
     for candidate, sim in w2v_model.wv.most_similar(positive=valid_seeds, topn=50):
         
         # 기준치보다 유사도가 높은지 검사합니다.
-        if sim < SPECIFIC_EXPANSION_THRESHOLD:
+        if sim < SPECIFIED_SENTIMENT_THRESHOLD:
             continue
             
         # 수집하려는 품사인지 검사합니다.
@@ -174,6 +175,8 @@ for group_name, seeds in all_anchor_groups.items():
         specific_sentiment_map[candidate] = group_name
 
 
+SENTIMENT_THRESHOLD = 0.3
+
 # 이제 일반 감정 사전을 정의합니다.
 sentiment_lexicon = {}
 
@@ -195,7 +198,11 @@ for word in w2v_model.wv.index_to_key:
 
 # 감정 점수를 -1 ~ 1 범위로 정규화하여 저장합니다.
 max_abs_score = max(abs(s) for s in sentiment_lexicon.values())
-sentiment_lexicon = {w: float(s / max_abs_score) for w, s in sentiment_lexicon.items()}
+sentiment_lexicon = {
+    w: float(s / max_abs_score)
+    for w, s in sentiment_lexicon.items()
+    if abs(float(s / max_abs_score)) > SENTIMENT_THRESHOLD
+}
 
 
 
@@ -205,9 +212,9 @@ sentiment_lexicon = {w: float(s / max_abs_score) for w, s in sentiment_lexicon.i
 # 속성 기준 단어 (감정 단어와 결합)
 aspect_seeds = {
     "음식": ["맛", "음식", "반찬", "식사", "요리", "구성", "양", "디저트"],
-    "서비스": ["사장", "직원", "서비스", "응대", "알바", "웨이팅", "대기", "안내", "주문", "손님", "고객"],
-    "분위기": ["분위기", "인테리어", "테이블", "화장실", "자리", "에어컨", "청결", "조명"],
-    "가격": ["가성비", "가격", "물가", "돈", "혜자"],
+    "서비스": ["사장", "직원", "알바", "서비스", "응대", "안내", "웨이팅", "대기", "고객", "손님"],
+    "분위기": ["분위기", "인테리어", "화장실", "에어컨", "청결", "조명"],
+    "가격": ["가성비", "가격", "물가", "돈"],
 }
 
 # 명사만 사용합니다. (속성 요소를 포함한 다른 품사 단어는 복합 사전에 작성합니다.)
@@ -240,7 +247,7 @@ candidate_words = set()
 
 for asp, v_seeds in aspect_seeds.items():
     # 각 속성의 기준점과 가장 유사한 100개의 단어를 탐색합니다.
-    for word, score in w2v_model.wv.most_similar(positive = v_seeds, topn = 100):
+    for word, score in w2v_model.wv.most_similar(positive = v_seeds, topn = 50):
 
         # 이미 최상위 단어로 설정된 기준 단어는 패스합니다.
         if word in word_best:

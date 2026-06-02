@@ -47,14 +47,16 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
                 continue
 
             # 반전 표현이 나오면 감정을 뒤집습니다. (긍정 -> 부정)
-            if not is_blocked:
-                for i in range(max(0, idx - 3), idx):
-                    neg_left = any(tokens[i].form in ["못", "아니"] or (tokens[i].form == "안" and tokens[i].tag == "MAG"))
-                for i in range(idx + 1, min(len(tokens), idx + 5)):
-                    neg_right = any(tokens[i].form in ["않", "없", "덜", "없이"] or (tokens[i].tag == 'EC' and tokens[i].form == '면'))
+            neg_left, neg_right = False, False
+            for i in range(max(0, idx - 3), idx):
+                if tokens[i].form in ["못", "아니"] or (tokens[i].form == "안" and tokens[i].tag == "MAG"):
+                    neg_left = True
+            # 뒤에 '않다', '없다' 검사
+            for i in range(idx + 1, min(len(tokens), idx + 5)):
+                if tokens[i].form in ["않", "없", "덜"]:
+                    neg_right = True
 
             is_negated = neg_left or neg_right
-
             if is_negated:
                 score = -score
 
@@ -93,6 +95,7 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
                 # 중간에 절 분리 단어가 있으면, 해당 속성으로 연결하지 않습니다.
                 if not is_blocked(last_seen_aspect_idx, idx):
                     review_aspect_scores[last_seen_aspect].append(score)
+                    last_seen_aspect = None
                 else:
                     last_seen_aspect = None
 

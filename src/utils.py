@@ -4,6 +4,7 @@ import json
 ROOT = Path(__file__).resolve().parent.parent
 
 DATA_DIR = ROOT / "data"
+RAW = DATA_DIR / "raw"
 RAW_DATA = DATA_DIR / "raw" / "naver_reviews.json"
 PREP = DATA_DIR / "prep"
 LEXICON = DATA_DIR / "lexicon"

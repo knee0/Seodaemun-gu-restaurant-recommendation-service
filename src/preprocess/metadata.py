@@ -1,9 +1,8 @@
-import json
 from math import exp, log, log1p
 from datetime import datetime, timezone
-from src.utils import RAW_DATA, PREP, load_json, save_json
+from src.utils import RAW, PREP, load_json, save_json
 
-INPUT = RAW_DATA
+INPUT = RAW / "naver_reviews_franchise.json"
 OUTPUT = PREP / "metadata.json"
 
 # Recency: 오래된 리뷰의 영향력 감소.
@@ -58,14 +57,19 @@ def make_metadata(data):
         seen_raw = set()
         
         metadata = restaurant.get("metadata", {})
+        franchise = restaurant.get("franchise_classification", {})
+        time_period = restaurant.get("period_recommendation", {})
 
-        # 식당 이름과 카테고리(한식/일식 등).
+        # 식당 이름, 카테고리(한식/일식 등), 프랜차이즈 여부, 점심/저녁 추천
         res_data = {
             "name": metadata.get("name"),
-            "category": metadata.get("category")
+            "category": metadata.get("category"),
+            "category": metadata.get("category_raw"),
+            "franchinse": franchise.get("is_franchise"),
+            "time_period": time_period.get("label")
         }
 
-        # 리뷰에 대한 정보(리뷰 ID, 방문 일자, 작성 리뷰 개수, 방문 횟수)와 총 영향력.
+        # 리뷰의 총 영향력.
         rev_datas = []
         for idx, review in enumerate(restaurant.get("reviews", [])):
             # preprocessed에서 만든 리뷰 ID와 같은 형식.
@@ -92,9 +96,6 @@ def make_metadata(data):
 
             rev_datas.append({
                 "rev_id": rev_id,
-                "visit_time": visit_time,
-                "review_count": review_count,
-                "visit_count": visit_count,
                 "weight": weight
             })
 

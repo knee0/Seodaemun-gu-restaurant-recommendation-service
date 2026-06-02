@@ -1,7 +1,7 @@
 [
   {
     "id": "r001",
-    "name": "스시 마스터",
+    "name": "때때",
     "category": "일식",
     "description": "신선한 재료로 만드는 오마카세",
     "image_url": "/images/sushi-master.jpg",
@@ -16,7 +16,7 @@
     },
     "phone": "02-3456-7890",
     "address": "서울특별시 서대문구 신촌로 123",
-    "naver_map_url": "https://map.naver.com",
+    "naver_map_url": "https://m.place.naver.com/restaurant/32876009/review/visitor?reviewSort=recent",
     "kakao_map_url": "https://map.kakao.com",
     "reviews": [
       {
@@ -41,7 +41,7 @@
   },
   {
     "id": "r002",
-    "name": "이탈리안 키친",
+    "name": "프레퍼스 다이어트 푸드 이대점",
     "category": "양식",
     "category_raw": "파스타,피자",
     "description": "정통 이탈리안 파스타와 피자",
@@ -60,11 +60,12 @@
       "피자",
       "분위기"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2028659657/review/visitor?reviewSort=recent"
   },
   {
     "id": "r003",
-    "name": "파스타 공방",
+    "name": "뉴욕러브베이글",
     "category": "양식",
     "category_raw": "이탈리아음식",
     "description": "수제 파스타의 진수",
@@ -83,11 +84,12 @@
       "양식",
       "런치"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2046483649/review/visitor?reviewSort=recent"
   },
   {
     "id": "r004",
-    "name": "프렌치 비스트로",
+    "name": "육회바른연어 이대역점",
     "category": "양식",
     "category_raw": "프랑스음식",
     "description": "프랑스 가정식을 현대적으로 재해석",
@@ -106,11 +108,12 @@
       "기념일",
       "분위기"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2066647870/review/visitor?reviewSort=recent"
   },
   {
     "id": "r005",
-    "name": "달빛 카페",
+    "name": "가에 서울(GaE Seoul)",
     "category": "카페",
     "category_raw": "디저트카페",
     "description": "분위기 좋은 디저트 카페",
@@ -129,11 +132,12 @@
       "카페",
       "사진맛집"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2080580825/review/visitor?reviewSort=recent"
   },
   {
     "id": "r006",
-    "name": "한옥 밥상",
+    "name": "육해담",
     "category": "한식",
     "category_raw": "백반",
     "description": "집밥 같은 따뜻한 한식",
@@ -152,11 +156,12 @@
       "백반",
       "가성비"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2001820349/review/visitor?reviewSort=recent"
   },
   {
     "id": "r007",
-    "name": "마라하우스",
+    "name": "컾핖짚 본점",
     "category": "중식",
     "category_raw": "마라탕",
     "description": "얼얼한 국물의 진한 마라탕",
@@ -175,11 +180,12 @@
       "중식",
       "혼밥"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/1324251741/review/visitor?reviewSort=recent"
   },
   {
     "id": "r008",
-    "name": "규카츠 정원",
+    "name": "마닐로우(manilraw)",
     "category": "일식",
     "category_raw": "규카츠",
     "description": "겉은 바삭하고 속은 촉촉한 규카츠",
@@ -198,11 +204,12 @@
       "일식",
       "데이트"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2093827215/review/visitor?reviewSort=recent"
   },
   {
     "id": "r009",
-    "name": "브런치 베이",
+    "name": "소오",
     "category": "카페",
     "category_raw": "브런치카페",
     "description": "브런치와 커피를 함께 즐기는 공간",
@@ -221,11 +228,12 @@
       "커피",
       "카페"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/37057499/review/visitor?reviewSort=recent"
   },
   {
     "id": "r010",
-    "name": "분식포차",
+    "name": "푸라닭 신촌",
     "category": "한식",
     "category_raw": "분식",
     "description": "떡볶이와 튀김이 맛있는 분식집",
@@ -244,6 +252,7 @@
       "분식",
       "가성비"
     ],
-    "area": "신촌"
+    "area": "신촌",
+    "naver_map_url": "https://m.place.naver.com/restaurant/2066106772/review/visitor?reviewSort=recent"
   }
 ]

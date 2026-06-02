@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import RestaurantImage from "../components/RestaurantImage";
 import StarRating from "../components/StarRating";
 
 //star ratings
@@ -47,7 +48,7 @@ function DetailPage() {
           ← 뒤로가기
         </button>
 
-        <div className="detail-image-placeholder">대표 이미지</div>
+        <RestaurantImage restaurant={restaurant} variant="detail" />
 
         <div className="detail-header">
           <div>

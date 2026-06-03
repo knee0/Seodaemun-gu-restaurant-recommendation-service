@@ -81,10 +81,10 @@ def aggregate_aspect_scores():
 
                 # Apply Bayesian Smoothing
                 smoothed_score = (score_sum + avg_sum) / (count + CONFIDENCE)
-                avg_scores[aspect] = round(smoothed_score, 4)
+                avg_scores[aspect] = round(smoothed_score * 5, 4)
             else:
                 # 리뷰가 없는 속성은 글로벌 평균 값으로 부여.
-                avg_scores[aspect] = round(avg, 4)
+                avg_scores[aspect] = round(avg * 5, 4)
 
         final_output[res_id] = {
             "res_data": res_data,

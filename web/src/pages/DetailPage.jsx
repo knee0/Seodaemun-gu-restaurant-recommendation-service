@@ -82,10 +82,6 @@ function DetailPage() {
               <span className="detail-score-label">서비스</span>
               <StarRating score={restaurant.scores.service} />
             </div>
-            <div className="detail-score-row">
-              <span className="detail-score-label">편의성</span>
-              <StarRating score={restaurant.scores.system} />
-            </div>
           </div>
         </section>
 
@@ -106,31 +102,6 @@ function DetailPage() {
               네이버 지도로 보기
             </a>
 
-            <a
-              href={restaurant.kakao_map_url || "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="kakao-map-button"
-            >
-              카카오맵으로 보기
-            </a>
-          </div>
-        </section>
-
-        <section className="detail-section">
-          <h2>대표 리뷰</h2>
-
-          <div className="review-list">
-            {(restaurant.reviews || []).map((review, index) => (
-              <div key={index} className="review-card">
-                <div className="review-header">
-                  <strong>{review.author}</strong>
-                  <span>{renderStars(review.rating)}</span>
-                  <span>{review.date}</span>
-                </div>
-                <p>{review.text}</p>
-              </div>
-            ))}
           </div>
         </section>
       </div>

@@ -88,7 +88,6 @@ function DetailPage() {
         <section className="detail-section">
           <h2>상세 정보</h2>
           <div className="detail-info-list">
-            <p>📞 {restaurant.phone || "전화번호 없음"}</p>
             <p>📍 {restaurant.address || "주소 정보 없음"}</p>
           </div>
 

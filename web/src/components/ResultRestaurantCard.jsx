@@ -7,7 +7,7 @@ function ResultRestaurantCard({ restaurant }) {
 
   //key: internal ops, label: UI
   const scoreLabels = [
-    { key: "taste", label: "맛" },
+    { key: "taste", label: "음식" },
     { key: "price", label: "가격" },
     { key: "mood", label: "분위기" },
     { key: "service", label: "서비스" }
@@ -29,15 +29,15 @@ function ResultRestaurantCard({ restaurant }) {
         <p className="restaurant-description">{restaurant.description}</p>
 
       <div className="restaurant-meta">
-        <StarRating score={restaurant.total_score} />
-        <span>리뷰 {restaurant.review_count}개</span>
+        <StarRating score={restaurant.recommendationScore ?? restaurant.total_score} />
+        <span>
+          맞춤 총점 {(restaurant.recommendationScore ?? restaurant.total_score).toFixed(2)}
+        </span>
       </div>
 
-        {restaurant.recommendationScore && (
-          <div className="recommendation-score">
-            추천 점수 {restaurant.recommendationScore}
-          </div>
-        )}
+      <div className="restaurant-sub-meta">
+        <span>리뷰 {restaurant.review_count}개</span>
+      </div>
 
         <div className="detail-score-list">
           {scoreLabels.map((item) => (

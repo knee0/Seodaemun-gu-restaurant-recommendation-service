@@ -67,7 +67,7 @@ function DetailPage() {
           <h2>카테고리별 평점</h2>
           <div className="detail-score-list">
             <div className="detail-score-row">
-              <span className="detail-score-label">맛</span>
+              <span className="detail-score-label">음식</span>
               <StarRating score={restaurant.scores.taste} />
             </div>
             <div className="detail-score-row">

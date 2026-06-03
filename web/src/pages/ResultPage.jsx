@@ -12,23 +12,36 @@ function ResultPage() {
   const params = new URLSearchParams(location.search);
 
   const selectedCategory = params.get("category") || "전체";
-  const priorityParam = params.get("priority") || "";
   const initialSearch = params.get("search") || "";
   const sortOption = params.get("sort") || "recommendation";
 
   const franchiseParam = params.get("franchise") || "all";
   const [draftFranchise, setDraftFranchise] = useState(franchiseParam);
 
-  const priorityOrder = priorityParam
-    ? priorityParam.split(",").filter(Boolean)
-    : [];
+  const hasCustomWeights =
+  params.has("taste") ||
+  params.has("price") ||
+  params.has("mood") ||
+  params.has("service");
+
+  const tasteWeight = Number(params.get("taste") || 1);
+  const priceWeight = Number(params.get("price") || 1);
+  const moodWeight = Number(params.get("mood") || 1);
+  const serviceWeight = Number(params.get("service") || 1);
+
+  const weightValues = {
+    taste: tasteWeight,
+    price: priceWeight,
+    mood: moodWeight,
+    service: serviceWeight
+  };
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
 
   const categories = ["전체", "한식", "양식", "일식", "카페"];
 
-  const priorityItems = [
-    { key: "taste", label: "맛" },
+  const weightItems = [
+    { key: "taste", label: "음식" },
     { key: "price", label: "가격" },
     { key: "mood", label: "분위기" },
     { key: "service", label: "서비스" }
@@ -36,16 +49,22 @@ function ResultPage() {
 
   const [draftCategory, setDraftCategory] = useState(selectedCategory);
   const [draftSearch, setDraftSearch] = useState(initialSearch);
-  const [draftSelectedKeys, setDraftSelectedKeys] = useState(priorityOrder);
+
+  const [draftWeights, setDraftWeights] = useState({
+    taste: tasteWeight,
+    price: priceWeight,
+    mood: moodWeight,
+    service: serviceWeight
+  });
 
   const labelMap = {
-    taste: "맛",
+    taste: "음식",
     price: "가격",
     mood: "분위기",
     service: "서비스"
   };
 
-  //call restaurant data from JSON 
+  //call restaurant data from JSON
   useEffect(() => {
     fetch("/data/web_mock_restaurants.json")
       .then((response) => response.json())
@@ -60,10 +79,23 @@ function ResultPage() {
   useEffect(() => {
     setDraftCategory(selectedCategory);
     setDraftSearch(initialSearch);
-    setDraftSelectedKeys(priorityOrder);
     setSearchTerm(initialSearch);
     setDraftFranchise(franchiseParam);
-  }, [selectedCategory, initialSearch, priorityParam, franchiseParam]);
+    setDraftWeights({
+      taste: tasteWeight,
+      price: priceWeight,
+      mood: moodWeight,
+      service: serviceWeight
+    });
+  }, [
+    selectedCategory,
+    initialSearch,
+    franchiseParam,
+    tasteWeight,
+    priceWeight,
+    moodWeight,
+    serviceWeight
+  ]);
 
   const filteredRestaurants = restaurants
     //filter category
@@ -77,58 +109,52 @@ function ResultPage() {
 
       const keyword = searchTerm.toLowerCase();
 
-      const menuMatched = 
+      const menuMatched =
         restaurant.menu?.some((menuItem) =>
           menuItem.toLowerCase().includes(keyword)
-    ) || false;
+        ) || false;
 
       return (
         restaurant.name.toLowerCase().includes(keyword) ||
         restaurant.description.toLowerCase().includes(keyword) ||
-        restaurant.category.toLowerCase().includes(keyword) || 
+        restaurant.category.toLowerCase().includes(keyword) ||
         menuMatched
       );
     })
-
     .filter((restaurant) => {
-      if (franchiseParam == "all") return true;
-      if (franchiseParam == "yes") return restaurant.is_franchise == true;
-      if (franchiseParam == "no") return restaurant.is_franchise == false;
+      if (franchiseParam === "all") return true;
+      if (franchiseParam === "yes") return restaurant.is_franchise === true;
+      if (franchiseParam === "no") return restaurant.is_franchise === false;
       return true;
-    })
+    });
 
   const allScoreKeys = ["taste", "price", "mood", "service"];
 
   //calc
   const scoredRestaurants = filteredRestaurants.map((restaurant) => {
-    let recommendationScore = 0;
+    let weightedScore = 0;
 
-    if (priorityOrder.length === 0) {
+    const rawWeights = allScoreKeys.map((key) => weightValues[key] || 0);
+    const totalWeight = rawWeights.reduce((sum, value) => sum + value, 0);
+
+    //no weights = no advanced setting
+    if (!hasCustomWeights) {
       const equalWeight = 1 / allScoreKeys.length;
 
-      recommendationScore = allScoreKeys.reduce((sum, key) => {
+      weightedScore = allScoreKeys.reduce((sum, key) => {
         return sum + (restaurant.scores[key] || 0) * equalWeight;
       }, 0);
     } else {
-      //place chosen 우선순위 contents to high prio
-      //some may not be checked
-      const uncheckedKeys = allScoreKeys.filter(
-        (key) => !priorityOrder.includes(key)
-      );
-
-      const finalOrder = [...priorityOrder, ...uncheckedKeys];
-      const weights = [0.35, 0.25, 0.18, 0.12, 0.10];
-
-      recommendationScore = finalOrder.reduce((sum, key, index) => {
-        const weight = weights[index] || 0;
-        const score = restaurant.scores[key] || 0;
-        return sum + score * weight;
+      //유저 설정 가중치
+      weightedScore = allScoreKeys.reduce((sum, key) => {
+        const normalizedWeight = (weightValues[key] || 0) / totalWeight;
+        return sum + (restaurant.scores[key] || 0) * normalizedWeight;
       }, 0);
     }
 
     return {
       ...restaurant,
-      recommendationScore: Number(recommendationScore.toFixed(2))
+      recommendationScore: Number(weightedScore.toFixed(2))
     };
   });
 
@@ -152,13 +178,20 @@ function ResultPage() {
   //update URL to match with selected values
   const updateUrl = ({
     category = selectedCategory,
-    priority = priorityParam,
     search = searchTerm,
     sort = sortOption,
-    franchise = franchiseParam
+    franchise = franchiseParam,
+    taste = tasteWeight,
+    price = priceWeight,
+    mood = moodWeight,
+    service = serviceWeight
   }) => {
     navigate(
-      `/results?category=${encodeURIComponent(category)}&priority=${priority}&search=${encodeURIComponent(search)}&sort=${sort}&franchise=${franchise}`    
+      `/results?category=${encodeURIComponent(
+        category
+      )}&search=${encodeURIComponent(
+        search
+      )}&sort=${sort}&franchise=${franchise}&taste=${taste}&price=${price}&mood=${mood}&service=${service}`
     );
   };
 
@@ -170,43 +203,46 @@ function ResultPage() {
     updateUrl({ sort: newSort });
   };
 
-  const handleTogglePriority = (key) => {
-    setDraftSelectedKeys((prev) => {
-      if (prev.includes(key)) {
-        return prev.filter((item) => item !== key);
-      }
-      return [...prev, key];
-    });
+  const handleWeightChange = (key, value) => {
+    setDraftWeights((prev) => ({
+      ...prev,
+      [key]: Number(value)
+    }));
   };
 
   //advanced settings: apply to URL and close panel
   const handleApplyAdvanced = () => {
-    const newPriority = draftSelectedKeys.join(",");
-
     navigate(
       `/results?category=${encodeURIComponent(
         draftCategory
-      )}&priority=${newPriority}&search=${encodeURIComponent(
+      )}&search=${encodeURIComponent(
         draftSearch
-      )}&sort=${sortOption}&franchise=${draftFranchise}`
+      )}&sort=${sortOption}&franchise=${draftFranchise}&taste=${
+        draftWeights.taste
+      }&price=${draftWeights.price}&mood=${draftWeights.mood}&service=${
+        draftWeights.service
+      }`
     );
 
     setShowAdvanced(false);
   };
 
-  //우선순위 텍스트는 3개만
-  const shortPriorityText =
-    priorityOrder.length > 0
-      ? priorityOrder.map((key) => labelMap[key]).slice(0, 3).join(" > ")
-      : "없음";
+  //show current weight values
+  const shortPriorityText = useMemo(() => {
+    const activeWeights = weightItems
+      .filter((item) => weightValues[item.key] > 0)
+      .map((item) => `${item.label} ${weightValues[item.key]}`);
+
+    return activeWeights.length > 0 ? activeWeights.join(" · ") : "없음";
+  }, [tasteWeight, priceWeight, moodWeight, serviceWeight]);
 
   const draftPriorityPreview = useMemo(() => {
-    if (draftSelectedKeys.length === 0) return "없음";
+    const activeWeights = weightItems
+      .filter((item) => draftWeights[item.key] > 0)
+      .map((item) => `${item.label} ${draftWeights[item.key]}`);
 
-    return draftSelectedKeys
-      .map((key) => priorityItems.find((item) => item.key === key)?.label)
-      .join(" > ");
-  }, [draftSelectedKeys]);
+    return activeWeights.length > 0 ? activeWeights.join(" · ") : "없음";
+  }, [draftWeights]);
 
   return (
     <div className="result-page">
@@ -249,7 +285,7 @@ function ResultPage() {
             }
           </span>
           <span className="info-chip">카테고리: {selectedCategory}</span>
-          <span className="info-chip">우선순위: {shortPriorityText}</span>
+          <span className="info-chip">가중치: {shortPriorityText}</span>
         </div>
 
         <div className={`advanced-panel ${showAdvanced ? "open" : ""}`}>
@@ -274,37 +310,32 @@ function ResultPage() {
             </div>
 
             <div className="advanced-block">
-              <h3>중요한 평가 기준 선택</h3>
-              <p>체크한 순서대로 우선 반영됩니다.</p>
+              <h3>평가 항목 가중치 설정</h3>
+              <p>각 항목에 1~5 값을 주면, 그 비율대로 총점이 계산됩니다.</p>
 
-              <div className="compact-priority-list">
-                {priorityItems.map((item) => {
-                  const checked = draftSelectedKeys.includes(item.key);
-                  const order = checked
-                    ? draftSelectedKeys.indexOf(item.key) + 1
-                    : null;
+              <div className="weight-setting-list">
+                {weightItems.map((item) => (
+                  <div key={item.key} className="weight-setting-row">
+                    <span className="weight-setting-label">{item.label}</span>
 
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      className={
-                        checked
-                          ? "compact-priority-chip active"
-                          : "compact-priority-chip"
-                      }
-                      onClick={() => handleTogglePriority(item.key)}
-                    >
-                      <span className="chip-checkbox">{checked ? "✓" : ""}</span>
-                      <span className="chip-label">{item.label}</span>
-                      {checked && <span className="chip-order">{order}</span>}
-                    </button>
-                  );
-                })}
+                    <div className="weight-slider-group">
+                      <input
+                        type="range"
+                        min="1"
+                        max="5"
+                        step="1"
+                        value={draftWeights[item.key]}
+                        onChange={(e) => handleWeightChange(item.key, e.target.value)}
+                        className="weight-slider"
+                      />
+                      <span className="weight-slider-value">{draftWeights[item.key]}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="selected-priority-preview">
-                <strong>현재 우선순위:</strong> {draftPriorityPreview}
+                <strong>현재 가중치:</strong> {draftPriorityPreview}
               </div>
             </div>
 

@@ -1,8 +1,9 @@
+import re
 from math import exp, log, log1p
 from datetime import datetime, timezone
 from src.utils import RAW, PREP, load_json, save_json
 
-INPUT = RAW / "naver_reviews_franchise.json"
+INPUT = RAW / "naver_reviews_deluxe.json"
 OUTPUT = PREP / "metadata.json"
 
 # Recency: 오래된 리뷰의 영향력 감소.
@@ -45,6 +46,29 @@ def calculate_weight(visit_time, review_date_flag, review_count, visit_count):
     # 리뷰의 총 영향력(weight)을 리턴합니다.
     return recency * activity * loyalty
 
+
+stopwords = ["카카오", "이벤트", "리뷰", "카드", "네이버"]
+
+def clean_menu(text):
+    for word in stopwords:
+        if word in text:
+            return
+
+    text = re.sub(r"^\d+\s*\.?\s*", "", text)
+
+    text = re.sub(r"\[[^\]]*\]", "", text)
+    text = re.sub(r"\([^)]*\)", "", text)
+
+    text = re.sub(r"[^가-힣\s]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+
+    if len(text) <= 1: return
+
+    return text
+
+
+
+
 def make_metadata(data):
     dataset = {}
 
@@ -59,14 +83,31 @@ def make_metadata(data):
         metadata = restaurant.get("metadata", {})
         franchise = restaurant.get("franchise_classification", {})
         time_period = restaurant.get("period_recommendation", {})
+        
+        all_menu = restaurant.get("all_menu", [])
+        cleaned_menu = []
 
-        # 식당 이름, 카테고리(한식/일식 등), 프랜차이즈 여부, 점심/저녁 추천
+        for menu in all_menu:
+            result = clean_menu(menu)
+            if result is not None:
+                cleaned_menu.append(result)
+
+        category_raw = metadata.get("category_raw")
+        if category_raw == "아시안/세계요리":
+            category_raw = "세계요리"
+        elif category_raw == "카페/디저트":
+            category_raw = "카페"
+        elif category_raw == "술집/주점":
+            category_raw = "주점"
+
+        # 식당 이름, 카테고리(한식/일식 등), 프랜차이즈 여부, 점심/저녁 추천, 메뉴 목록
         res_data = {
             "name": metadata.get("name"),
             "category": metadata.get("category"),
-            "category": metadata.get("category_raw"),
+            "category_raw": category_raw,
             "franchinse": franchise.get("is_franchise"),
-            "time_period": time_period.get("label")
+            "time_period": time_period.get("label"),
+            "all_menu": cleaned_menu
         }
 
         # 리뷰의 총 영향력.

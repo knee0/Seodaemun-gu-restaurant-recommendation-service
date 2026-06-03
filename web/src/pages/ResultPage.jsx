@@ -16,6 +16,9 @@ function ResultPage() {
   const initialSearch = params.get("search") || "";
   const sortOption = params.get("sort") || "recommendation";
 
+  const franchiseParam = params.get("franchise") || "all";
+  const [draftFranchise, setDraftFranchise] = useState(franchiseParam);
+
   const priorityOrder = priorityParam
     ? priorityParam.split(",").filter(Boolean)
     : [];
@@ -28,7 +31,6 @@ function ResultPage() {
     { key: "taste", label: "맛" },
     { key: "price", label: "가격" },
     { key: "mood", label: "분위기" },
-    { key: "system", label: "편의성" },
     { key: "service", label: "서비스" }
   ];
 
@@ -40,7 +42,6 @@ function ResultPage() {
     taste: "맛",
     price: "가격",
     mood: "분위기",
-    system: "편의성",
     service: "서비스"
   };
 
@@ -61,7 +62,8 @@ function ResultPage() {
     setDraftSearch(initialSearch);
     setDraftSelectedKeys(priorityOrder);
     setSearchTerm(initialSearch);
-  }, [selectedCategory, initialSearch, priorityParam]);
+    setDraftFranchise(franchiseParam);
+  }, [selectedCategory, initialSearch, priorityParam, franchiseParam]);
 
   const filteredRestaurants = restaurants
     //filter category
@@ -74,14 +76,28 @@ function ResultPage() {
       if (!searchTerm.trim()) return true;
 
       const keyword = searchTerm.toLowerCase();
+
+      const menuMatched = 
+        restaurant.menu?.some((menuItem) =>
+          menuItem.toLowerCase().includes(keyword)
+    ) || false;
+
       return (
         restaurant.name.toLowerCase().includes(keyword) ||
         restaurant.description.toLowerCase().includes(keyword) ||
-        restaurant.category.toLowerCase().includes(keyword)
+        restaurant.category.toLowerCase().includes(keyword) || 
+        menuMatched
       );
-    });
+    })
 
-  const allScoreKeys = ["taste", "price", "mood", "system", "service"];
+    .filter((restaurant) => {
+      if (franchiseParam == "all") return true;
+      if (franchiseParam == "yes") return restaurant.is_franchise == true;
+      if (franchiseParam == "no") return restaurant.is_franchise == false;
+      return true;
+    })
+
+  const allScoreKeys = ["taste", "price", "mood", "service"];
 
   //calc
   const scoredRestaurants = filteredRestaurants.map((restaurant) => {
@@ -138,10 +154,11 @@ function ResultPage() {
     category = selectedCategory,
     priority = priorityParam,
     search = searchTerm,
-    sort = sortOption
+    sort = sortOption,
+    franchise = franchiseParam
   }) => {
     navigate(
-      `/results?category=${encodeURIComponent(category)}&priority=${priority}&search=${encodeURIComponent(search)}&sort=${sort}`
+      `/results?category=${encodeURIComponent(category)}&priority=${priority}&search=${encodeURIComponent(search)}&sort=${sort}&franchise=${franchise}`    
     );
   };
 
@@ -171,7 +188,7 @@ function ResultPage() {
         draftCategory
       )}&priority=${newPriority}&search=${encodeURIComponent(
         draftSearch
-      )}&sort=${sortOption}`
+      )}&sort=${sortOption}&franchise=${draftFranchise}`
     );
 
     setShowAdvanced(false);
@@ -222,6 +239,15 @@ function ResultPage() {
         </div>
 
         <div className="result-info-bar">
+          <span className="info-chip">
+            프랜차이즈: {
+              franchiseParam === "all"
+                ? "전체"
+                : franchiseParam === "yes"
+                ? "프랜차이즈만"
+                : "비프랜차이즈만"
+            }
+          </span>
           <span className="info-chip">카테고리: {selectedCategory}</span>
           <span className="info-chip">우선순위: {shortPriorityText}</span>
         </div>
@@ -279,6 +305,30 @@ function ResultPage() {
 
               <div className="selected-priority-preview">
                 <strong>현재 우선순위:</strong> {draftPriorityPreview}
+              </div>
+            </div>
+
+            <div className="advanced-block">
+              <h3>프랜차이즈 여부</h3>
+              <div className="category-list">
+                <button
+                  className={draftFranchise === "all" ? "category-button active" : "category-button"}
+                  onClick={() => setDraftFranchise("all")}
+                >
+                  전체
+                </button>
+                <button
+                  className={draftFranchise === "yes" ? "category-button active" : "category-button"}
+                  onClick={() => setDraftFranchise("yes")}
+                >
+                  프랜차이즈만
+                </button>
+                <button
+                  className={draftFranchise === "no" ? "category-button active" : "category-button"}
+                  onClick={() => setDraftFranchise("no")}
+                >
+                  비프랜차이즈만
+                </button>
               </div>
             </div>
 

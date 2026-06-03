@@ -10,7 +10,7 @@ OUTPUT = SCORES / "lexicon_scores.json"
 
 
 # 감정 단어 주위를 얼마나 살펴볼 것인지 정의합니다. (3: 주위의 세 단어)
-DEFAULT_WINDOW_SIZE = 3
+DEFAULT_WINDOW_SIZE = 5
 
 # 감정 단어가 있으면, 단어의 '감정 점수'를 가장 가까운 카테고리 단어의 '카테고리'에 부여합니다.
 def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspect,
@@ -25,7 +25,7 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
 
         boundary_indices = {
             i for i, t in enumerate(tokens)
-            if (t.form in ['근데', '다만', '지만'])
+            if (t.form in ['지만', '는데', '으나'])
         }
 
         # start, end 사이에 절이 달라지는지 검사합니다.
@@ -35,56 +35,61 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
 
         last_seen_aspect = None
         last_seen_aspect_idx = -1
-        sentiment_positions = [idx for idx, w in enumerate(sent_words) if w in sentiment_lexicon]
+        sentiment_positions = [
+            idx for idx, w in enumerate(sent_words) 
+            if w in sentiment_lexicon or w in specific_sentiment_map
+        ]
 
         for idx in sentiment_positions:
             token = tokens[idx]
             word = sent_words[idx]
-            score = sentiment_lexicon[word]
-
-            # 감정 점수가 너무 낮은 단어는 패스합니다.
-            if abs(score) < 0.15:
-                continue
 
             # 반전 표현이 나오면 감정을 뒤집습니다. (긍정 -> 부정)
             neg_left, neg_right = False, False
             for i in range(max(0, idx - 3), idx):
-                if tokens[i].form in ["못", "아니"] or (tokens[i].form == "안" and tokens[i].tag == "MAG"):
+                if (tokens[i].form == "안" and tokens[i].tag == "MAG"):
                     neg_left = True
             # 뒤에 '않다', '없다' 검사
             for i in range(idx + 1, min(len(tokens), idx + 5)):
-                if tokens[i].form in ["않", "없", "덜"]:
+                if tokens[i].form in ["못", "않", "없"]:
                     neg_right = True
 
             is_negated = neg_left or neg_right
-            if is_negated:
-                score = -score
 
-            # 복합 사전에 속하는 단어인 경우, 해당 속성을 바로 부여합니다.
+
             if word in specific_sentiment_map:
                 aspect, polarity = specific_sentiment_map[word].split('_')
-                assigned_score = abs(score) if polarity == "긍정" else -abs(score)
+                
+                # 감정 사전에 있으면 그 점수의 크기(magnitude)를 쓰고, 없으면 확실한 기본값(1.0) 부여
+                base_score = sentiment_lexicon.get(word, 1.0)
+                score_magnitude = max(abs(base_score), 0.5) # 최소한의 감정 세기 보장
+                
+                assigned_score = score_magnitude if polarity == "긍정" else -score_magnitude
 
-                if is_negated:
-                    assigned_score = -assigned_score
+                if is_negated: assigned_score = -assigned_score
 
                 review_aspect_scores[aspect].append(assigned_score)
                 last_seen_aspect = aspect
                 last_seen_aspect_idx = idx
-                continue
+                continue 
 
+
+            score = sentiment_lexicon[word]
+
+            if is_negated: 
+                score = -score
 
             # 일반 감정 단어의 경우, 가장 가까운 속성 단어를 탐색합니다.
             aspect_found = False
-            for k in range(1, window_size + 1):
+            for k in range(0, window_size + 1):
                 for near_idx in [idx - k, idx + k]:
                     if 0 <= near_idx < len(sent_words) and sent_words[near_idx] in find_aspect:
-                        if not is_blocked(idx, near_idx):
-                            aspect = find_aspect[sent_words[near_idx]]
-                            review_aspect_scores[aspect].append(score)
-                            last_seen_aspect = aspect
-                            last_seen_aspect_idx = near_idx
-                            aspect_found = True
+                        #if not is_blocked(idx, near_idx):
+                        aspect = find_aspect[sent_words[near_idx]]
+                        review_aspect_scores[aspect].append(score)
+                        last_seen_aspect = aspect
+                        last_seen_aspect_idx = near_idx
+                        aspect_found = True
                 if aspect_found:
                     break
 
@@ -95,9 +100,7 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
                 # 중간에 절 분리 단어가 있으면, 해당 속성으로 연결하지 않습니다.
                 if not is_blocked(last_seen_aspect_idx, idx):
                     review_aspect_scores[last_seen_aspect].append(score)
-                    last_seen_aspect = None
-                else:
-                    last_seen_aspect = None
+                last_seen_aspect = None
 
 
     # 위의 과정을 거치면, 리뷰마다 속성별로 다양한 점수를 갖게 됩니다.

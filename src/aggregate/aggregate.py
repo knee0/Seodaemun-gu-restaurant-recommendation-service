@@ -3,9 +3,9 @@ from src.utils import PREP, SCORES, load_json, save_json
 
 INPUT = SCORES / "bert_scores.json"
 METADATA = PREP / "metadata.json"
-FINAL = SCORES / "restaurant_scores.json"
+FINAL = SCORES / "final_scores.json"
 
-CONFIDENCE = 20
+CONFIDENCE = 10
 
 def aggregate_aspect_scores():
     bert_scores = load_json(INPUT)
@@ -16,17 +16,19 @@ def aggregate_aspect_scores():
         for rev in res_info.get("rev_data", []):
             id2weight[rev["rev_id"]] = rev.get("weight", 1.0)
 
+    ASPECTS = ['음식', '서비스', '분위기', '가격']
+
     # Global trackers for Bayesian Smoothing
-    global_scores = {'음식': 0.0, '서비스': 0.0, '분위기': 0.0, '가격': 0.0, '편의성': 0.0}
-    global_counts = {'음식': 0, '서비스': 0, '분위기': 0, '가격': 0, '편의성': 0}
+    global_scores = {aspect: 0.0 for aspect in ASPECTS}
+    global_counts = {aspect: 0 for aspect in ASPECTS}
 
     # Trackers for individual restaurants
     total_scores = {}
     total_counts = {}
 
     for res_id in metadata.keys():
-        total_scores[res_id] = {'음식': 0.0, '서비스': 0.0, '분위기': 0.0, '가격': 0.0, '편의성': 0.0}
-        total_counts[res_id] = {'음식': 0, '서비스': 0, '분위기': 0, '가격': 0, '편의성': 0}
+        total_scores[res_id] = {aspect: 0.0 for aspect in ASPECTS}
+        total_counts[res_id] = {aspect: 0 for aspect in ASPECTS}
 
     for review in bert_scores:
         rev_id = review.get("rev_id")
@@ -34,45 +36,55 @@ def aggregate_aspect_scores():
         res_id = rev_id.split("_")[0]
         weight = id2weight[rev_id]
 
+        # 메타데이터에 없는 리뷰 ID가 있을 경우 기본값 1.0 (있으면 안 )
+        weight = id2weight.get(rev_id, 1.0)
         labels = review.get("labels", [])
 
         for label in labels:
             aspect, sentiment = label.split("_")
+
             total_counts[res_id][aspect] += 1
             global_counts[aspect] += 1
 
+            # 각 리뷰의 점수를 즉시 0 ~ 1 사이로 정규화하여 누적
             if sentiment == "긍정":
-                total_scores[res_id][aspect] += weight
-                global_scores[aspect] += weight
+                norm_score = (weight + 1.44) / 2.88
             elif sentiment == "부정":
-                total_scores[res_id][aspect] -= weight
-                global_scores[aspect] -= weight
+                norm_score = (-weight + 1.44) / 2.88
+
+            total_scores[res_id][aspect] += norm_score
+            global_scores[aspect] += norm_score
 
 
     global_avg = {}
-    for aspect in global_scores.keys():
-        global_avg[aspect] = global_scores[aspect] / global_counts[aspect]
+    for aspect in ASPECTS:
+        if global_counts[aspect] > 0:
+            global_avg[aspect] = global_scores[aspect] / global_counts[aspect]
+        else:
+            global_avg[aspect] = 0.5 # 완벽한 중립
 
 
     final_output = {}
     for res_id, res_info in metadata.items():
         res_data = res_info.get("res_data", {})
-
         avg_scores = {}
         cur_scores = total_scores[res_id]
         cur_counts = total_counts[res_id]
 
-        for aspect, count in cur_counts.items():
+        for aspect in ASPECTS:
+            count = cur_counts[aspect]
+            avg = global_avg[aspect]
+
             if count > 0:
                 score_sum = cur_scores[aspect]
-                avg = global_avg[aspect]
                 avg_sum = CONFIDENCE * avg
 
                 # Apply Bayesian Smoothing
                 smoothed_score = (score_sum + avg_sum) / (count + CONFIDENCE)
                 avg_scores[aspect] = round(smoothed_score, 4)
             else:
-                avg_scores[aspect] = 0.0
+                # 리뷰가 없는 속성은 글로벌 평균 값으로 부여.
+                avg_scores[aspect] = round(avg, 4)
 
         final_output[res_id] = {
             "res_data": res_data,

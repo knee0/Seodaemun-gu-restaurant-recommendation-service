@@ -14,7 +14,7 @@ def main():
 
     golden_set = {rev["rev_id"] for rev in golden_val} | {rev["rev_id"] for rev in golden_test}
 
-    niche_targets = ["분위기_부정"]
+    niche_targets = ["음식_부정"]
     niche_reviews = {target: [] for target in niche_targets}
 
     for rev in lexicon_results:

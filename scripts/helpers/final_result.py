@@ -20,6 +20,6 @@ def print_top_10_by_aspect(dataset):
             print(f"{rank:2d}. {name:<20} (점수: {score:.4f})")
 
 if __name__ == "__main__":
-    INPUT = SCORES / "restaurant_scores.json"
+    INPUT = SCORES / "final_scores.json"
     dataset = load_json(INPUT)
     print_top_10_by_aspect(dataset)

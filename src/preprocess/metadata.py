@@ -60,11 +60,19 @@ def make_metadata(data):
         franchise = restaurant.get("franchise_classification", {})
         time_period = restaurant.get("period_recommendation", {})
 
+        category_raw = metadata.get("category_raw")
+        if category_raw == "아시안/세계요리":
+            category_raw = "세계요리"
+        elif category_raw == "카페/디저트":
+            category_raw = "카페"
+        elif category_raw == "술집/주점":
+            category_raw = "주점"
+
         # 식당 이름, 카테고리(한식/일식 등), 프랜차이즈 여부, 점심/저녁 추천
         res_data = {
             "name": metadata.get("name"),
             "category": metadata.get("category"),
-            "category": metadata.get("category_raw"),
+            "category_raw": category_raw,
             "franchinse": franchise.get("is_franchise"),
             "time_period": time_period.get("label")
         }

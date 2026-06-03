@@ -1,9 +1,8 @@
-import json
 import numpy as np
 import torch
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding
 from src.utils import PREP, MODELS, SCORES, load_json, save_json
 
 MODEL = MODELS / "models" / "kcelectra_multilabel"
@@ -31,16 +30,13 @@ class InferenceDataset(Dataset):
         inputs = self.tokenizer(
             text,
             truncation=True,
-            padding="max_length",
             max_length=self.max_length,
-            return_tensors="pt"
         )
         
-        # Squeeze out batch dimension added by return_tensors
         return {
             "rev_id": rev_id,
-            "input_ids": inputs["input_ids"].squeeze(0),
-            "attention_mask": inputs["attention_mask"].squeeze(0)
+            "input_ids": inputs["input_ids"],
+            "attention_mask": inputs["attention_mask"]
         }
 
 def run_inference():
@@ -60,7 +56,16 @@ def run_inference():
 
     raw_data = load_json(INPUT)
     dataset = InferenceDataset(raw_data, tokenizer)
-    dataloader = DataLoader(dataset, batch_size=8) 
+
+    def custom_collate_fn(batch):
+        rev_ids = [item["rev_id"] for item in batch]
+        features = [{"input_ids": item["input_ids"], "attention_mask": item["attention_mask"]} for item in batch]
+        
+        padded = tokenizer.pad(features, padding=True, return_tensors="pt")
+        padded["rev_id"] = rev_ids
+        return padded
+
+    dataloader = DataLoader(dataset, batch_size=8, collate_fn=custom_collate_fn)
 
     results = []
 

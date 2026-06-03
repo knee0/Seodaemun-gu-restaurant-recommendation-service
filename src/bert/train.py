@@ -109,11 +109,9 @@ def find_best_thresholds(trainer, val_dataset):
 
 
 class CustomTrainer(Trainer):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, pos_weight, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Instantiate the tensor ONCE during initialization
-        self._pos_weight = torch.tensor([1.0, 4.0, 1.3, 6.5, 1.3, 8.5, 2.5, 9.0])
-
+        self._pos_weight = torch.tensor(pos_weight, dtype=torch.float32)
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         labels = inputs.get("labels")
@@ -136,6 +134,16 @@ def train_model():
 
     train_df = multi_label_vector(raw_train)
     val_df = multi_label_vector(raw_val)
+
+    labels_matrix = np.array(train_df['labels'].tolist())  # Shape: (N, 8)
+    pos_counts = labels_matrix.sum(axis=0)
+    neg_counts = len(labels_matrix) - pos_counts
+    
+    # Add a tiny epsilon to prevent division by zero
+    raw_weights = neg_counts / (pos_counts + 1e-6)
+    dynamic_weights = np.clip(np.sqrt(raw_weights), a_min=1.0, a_max=None)
+
+    print(f"Calculated pos_weights: {dynamic_weights.tolist()}")
 
     # Convert to HuggingFace Datasets
     train_dataset = Dataset.from_pandas(train_df)
@@ -163,10 +171,10 @@ def train_model():
         eval_strategy = "epoch",
         save_strategy = "epoch",
         learning_rate = 2e-5,
-        per_device_train_batch_size = 8,
+        per_device_train_batch_size = 4,
         gradient_accumulation_steps = 4,
-        per_device_eval_batch_size = 8,
-        num_train_epochs = 4,
+        per_device_eval_batch_size = 4,
+        num_train_epochs = 2,
         weight_decay = 0.01,
         logging_steps = 50,
         save_total_limit = 2,
@@ -180,6 +188,7 @@ def train_model():
     )
 
     trainer = CustomTrainer(
+        pos_weight = dynamic_weights,
         model = model,
         args = training_args,
         train_dataset = train_dataset,

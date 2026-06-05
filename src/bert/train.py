@@ -41,7 +41,7 @@ def multi_label_vector(raw_data):
         # If labels is a dictionary (Soft labels from Train Lexicon)
         if isinstance(labels, dict):
             for idx, label in enumerate(ASPECT_LABELS):
-                label_vector[idx] = float(labels.get(label, 0.0))
+                label_vector[idx] = float(labels.get(label, 0.05))
                 
         # If labels is a list (Hard labels from Golden Val)
         else:
@@ -63,13 +63,14 @@ def tokenize_and_format(batch):
 def compute_metrics(p: EvalPrediction):
     logits = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
     labels = p.label_ids
+    true_labels = (labels > 0.5).astype(int)
 
     sigmoid = lambda x: 1 / (1 + np.exp(-x))
     probs = sigmoid(logits)
     preds = (probs > 0.5).astype(int)
 
-    macro_f1 = f1_score(labels, preds, average="macro", zero_division=0)
-    micro_f1 = f1_score(labels, preds, average="micro", zero_division=0)
+    macro_f1 = f1_score(true_labels, preds, average="macro", zero_division=0)
+    micro_f1 = f1_score(true_labels, preds, average="micro", zero_division=0)
 
     subset_accuracy = accuracy_score(labels, preds)
     h_loss = hamming_loss(labels, preds)
@@ -84,6 +85,7 @@ def find_best_thresholds(trainer, val_dataset):
     predictions = trainer.predict(val_dataset)
     logits = predictions.predictions[0] if isinstance(predictions.predictions, tuple) else predictions.predictions
     labels = predictions.label_ids
+    true_labels = (labels > 0.5).astype(int)
 
     probs = 1 / (1 + np.exp(-logits))
     best_thresholds = {}
@@ -94,7 +96,7 @@ def find_best_thresholds(trainer, val_dataset):
         
         for th in np.arange(0.01, 0.99, 0.01):
             preds = (probs[:, idx] > th).astype(int)
-            f1 = f1_score(labels[:, idx], preds, zero_division=0)
+            f1 = f1_score(true_labels[:, idx], preds, zero_division=0)
             
             if f1 > best_f1:
                 best_f1 = f1

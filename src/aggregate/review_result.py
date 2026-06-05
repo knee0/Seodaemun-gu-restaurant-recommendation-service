@@ -1,9 +1,9 @@
 from src.utils import SCORES, load_json, save_json
 
-INPUT = SCORES / "restaurant_scores.json"
+INPUT = SCORES / "final_scores.json"
 data = load_json(INPUT)
 
-ASPECTS = ["음식", "서비스", "분위기", "가격", "편의성"]
+ASPECTS = ["음식", "서비스", "분위기", "가격"]
 final_rankings = {}
 
 for aspect in ASPECTS:

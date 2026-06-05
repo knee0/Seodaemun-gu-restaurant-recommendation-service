@@ -31,7 +31,7 @@ def main():
             continue
             
         labels = rev.get("labels", {})
-        cleaned_labels = {label: (1.0 if score >= LEX_THRESH else 0.0) for label, score in labels.items()}
+        cleaned_labels = {label: (0.95 if score >= LEX_THRESH else 0.0) for label, score in labels.items()}
 
         total_score = sum(cleaned_labels.values())
         if total_score == 0:

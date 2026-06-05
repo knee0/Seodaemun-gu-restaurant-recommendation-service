@@ -8,6 +8,8 @@ SENTIMENT_LEXICON = LEXICON / "sentiment_lexicon.json"
 SPECIFIC_MAP = LEXICON / "specific_sentiment_map.json"
 OUTPUT = SCORES / "lexicon_scores.json"
 
+def make_key(word, tag):
+    return f"{word}/{tag}" if tag.startswith('N') else word
 
 # 감정 단어 주위를 얼마나 살펴볼 것인지 정의합니다. (3: 주위의 세 단어)
 DEFAULT_WINDOW_SIZE = 5
@@ -21,7 +23,11 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
 
     for sent in kiwi_sents:
         tokens = kiwi.tokenize(sent.text)
-        sent_words = [t.form for t in tokens]
+
+        valid_indices = [
+            i for i, t in enumerate(tokens) 
+            if not (t.tag.startswith('J') or t.tag.startswith('S'))
+        ]
 
         boundary_indices = {
             i for i, t in enumerate(tokens)
@@ -35,14 +41,19 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
 
         last_seen_aspect = None
         last_seen_aspect_idx = -1
-        sentiment_positions = [
-            idx for idx, w in enumerate(sent_words) 
-            if w in sentiment_lexicon or w in specific_sentiment_map
-        ]
+
+        sentiment_positions = []
+        for i in valid_indices:
+            t = tokens[i]
+            combined_word = make_key(t.form, t.tag)
+            if combined_word in sentiment_lexicon or combined_word in specific_sentiment_map:
+                sentiment_positions.append(i)
+
+        valid_idx_to_pos = {idx: pos for pos, idx in enumerate(valid_indices)}
 
         for idx in sentiment_positions:
             token = tokens[idx]
-            word = sent_words[idx]
+            combined_word = make_key(token.form, token.tag)
 
             # 반전 표현이 나오면 감정을 뒤집습니다. (긍정 -> 부정)
             neg_left, neg_right = False, False
@@ -50,22 +61,21 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
                 if (tokens[i].form == "안" and tokens[i].tag == "MAG"):
                     neg_left = True
             # 뒤에 '않다', '없다' 검사
-            for i in range(idx + 1, min(len(tokens), idx + 5)):
-                if tokens[i].form in ["못", "않", "없"]:
+            for i in range(idx + 1, min(len(tokens), idx + 4)):
+                if tokens[i].form in ["않", "없", "없이"] or (tokens[i].form == "안" and tokens[i].tag == "MAG"):
                     neg_right = True
 
             is_negated = neg_left or neg_right
 
 
-            if word in specific_sentiment_map:
-                aspect, polarity = specific_sentiment_map[word].split('_')
+            if combined_word in specific_sentiment_map:
+                aspect, polarity = specific_sentiment_map[combined_word].split('_')
                 
                 # 감정 사전에 있으면 그 점수의 크기(magnitude)를 쓰고, 없으면 확실한 기본값(1.0) 부여
-                base_score = sentiment_lexicon.get(word, 1.0)
+                base_score = sentiment_lexicon.get(combined_word, 1.0)
                 score_magnitude = max(abs(base_score), 0.5) # 최소한의 감정 세기 보장
                 
                 assigned_score = score_magnitude if polarity == "긍정" else -score_magnitude
-
                 if is_negated: assigned_score = -assigned_score
 
                 review_aspect_scores[aspect].append(assigned_score)
@@ -74,22 +84,29 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
                 continue 
 
 
-            score = sentiment_lexicon[word]
+            score = sentiment_lexicon[combined_word]
+            if is_negated: score = -score
 
-            if is_negated: 
-                score = -score
 
             # 일반 감정 단어의 경우, 가장 가까운 속성 단어를 탐색합니다.
+            current_pos = valid_idx_to_pos[idx]
             aspect_found = False
-            for k in range(0, window_size + 1):
-                for near_idx in [idx - k, idx + k]:
-                    if 0 <= near_idx < len(sent_words) and sent_words[near_idx] in find_aspect:
-                        #if not is_blocked(idx, near_idx):
-                        aspect = find_aspect[sent_words[near_idx]]
-                        review_aspect_scores[aspect].append(score)
-                        last_seen_aspect = aspect
-                        last_seen_aspect_idx = near_idx
-                        aspect_found = True
+
+            for k in range(1, window_size + 1):
+                for next_pos in [current_pos - k, current_pos + k]:
+                    if 0 <= next_pos < len(valid_indices):
+                        near_idx = valid_indices[next_pos]
+                        near_token = tokens[near_idx]
+                        near_combined = make_key(near_token.form, near_token.tag)
+                        
+                        if near_combined in find_aspect:
+                            if not is_blocked(idx, near_idx):
+                                aspect = find_aspect[near_combined]
+                                review_aspect_scores[aspect].append(score)
+                                last_seen_aspect = aspect
+                                last_seen_aspect_idx = near_idx
+                                aspect_found = True
+                                break
                 if aspect_found:
                     break
 

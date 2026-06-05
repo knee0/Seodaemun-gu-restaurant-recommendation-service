@@ -19,9 +19,11 @@ Thumbs.db
 # All scraped data
 *.json
 *.jsonl
+*.csv
 
 # Allow json on /web subfolders
 !/web/**/*.json
+!/web/**/*.csv
 !/data/scores/*.json
 
 # No models

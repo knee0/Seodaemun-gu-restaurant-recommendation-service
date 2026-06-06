@@ -3,12 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import RestaurantImage from "../components/RestaurantImage";
 import StarRating from "../components/StarRating";
 
-//star ratings
-function renderStars(rating) {
-  const fullStars = "★".repeat(Math.floor(rating));
-  const emptyStars = "☆".repeat(5 - Math.floor(rating));
-  return fullStars + emptyStars;
-}
+const normalizeCategory = (category) =>
+  category === "세계요리" ? "아시안/세계요리" : category;
 
 function DetailPage() {
   const { id } = useParams();
@@ -57,7 +53,7 @@ function DetailPage() {
               {restaurant.description || restaurant.category_raw || restaurant.address}
             </p>
           </div>
-          <span className="category-badge">{restaurant.category}</span>
+          <span className="category-badge">{normalizeCategory(restaurant.category)}</span>
         </div>
 
         <div className="detail-rating-summary">

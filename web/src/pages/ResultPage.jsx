@@ -4,11 +4,13 @@ import ResultRestaurantCard from "../components/ResultRestaurantCard";
 
 function ResultPage() {
   const [restaurants, setRestaurants] = useState([]);
+  const [foodDictionary, setFoodDictionary] = useState({});
 
   const location = useLocation();
   const navigate = useNavigate();
 
   const params = new URLSearchParams(location.search);
+  const hasCategoryParam = params.has("category");
 
   const selectedCategory = params.get("category") || "전체";
   const initialSearch = params.get("search") || "";
@@ -45,7 +47,8 @@ function ResultPage() {
     "양식",
     "카페/디저트",
     "분식/간편식",
-    "술집/주점"
+    "술집/주점",
+    "아시안/세계요리"
   ];
 
   const weightItems = [
@@ -74,6 +77,143 @@ function ResultPage() {
   const getScoreValue = (restaurant, scoreKey) =>
     Number(restaurant.scores?.[scoreKey] || 0);
 
+  const normalizeText = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const splitSearchTerms = (value) =>
+    normalizeText(value)
+      .split(" ")
+      .map((term) => term.trim())
+      .filter(Boolean);
+
+  const getRestaurantSearchFields = (restaurant) => [
+    restaurant.name,
+    restaurant.category,
+    restaurant.category_raw,
+    ...(Array.isArray(restaurant.menus) ? restaurant.menus : [])
+  ];
+
+  const restaurantMatchesTerm = (restaurant, term) => {
+    const normalizedTerm = normalizeText(term);
+    if (!normalizedTerm) return false;
+
+    return getRestaurantSearchFields(restaurant).some((field) =>
+      normalizeText(field).includes(normalizedTerm)
+    );
+  };
+
+  const getCategoryRank = (category) => {
+    const index = categories.indexOf(category);
+    return index === -1 ? categories.length : index;
+  };
+
+  const normalizeCategory = (category) =>
+    category === "세계요리" ? "아시안/세계요리" : category;
+
+  const categoryMatches = (restaurantCategory, category) => {
+    if (category === "전체") return true;
+    return normalizeCategory(restaurantCategory) === category;
+  };
+
+  const getDominantCategory = (matchedRestaurants) => {
+    const counts = matchedRestaurants.reduce((acc, restaurant) => {
+      const category = normalizeCategory(restaurant.category);
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts).sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return getCategoryRank(a[0]) - getCategoryRank(b[0]);
+    })[0]?.[0] || "전체";
+  };
+
+  const dictionaryEntryMatchesTerm = (entry, term) => {
+    const normalizedEntry = normalizeText(entry);
+    const normalizedTerm = normalizeText(term);
+    return Boolean(normalizedEntry && normalizedTerm && normalizedEntry.includes(normalizedTerm));
+  };
+
+  const inferCategoryFromDictionary = (terms) => {
+    const matches = Object.entries(foodDictionary).map(([category, words]) => {
+      const wordList = Array.isArray(words) ? words : [];
+      const matchCount = terms.reduce((count, term) => {
+        const hasMatch = wordList.some((word) => dictionaryEntryMatchesTerm(word, term));
+        return hasMatch ? count + 1 : count;
+      }, 0);
+
+      return {
+        category: normalizeCategory(category),
+        matchCount
+      };
+    });
+
+    return matches
+      .filter((match) => match.matchCount > 0)
+      .sort((a, b) => {
+        if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+        return getCategoryRank(a.category) - getCategoryRank(b.category);
+      })[0]?.category || null;
+  };
+
+  const analyzeSearch = (search) => {
+    const normalizedSearch = normalizeText(search);
+
+    if (!normalizedSearch) {
+      return {
+        type: "none",
+        matchedRestaurants: null,
+        inferredCategory: null
+      };
+    }
+
+    const fullTermMatches = restaurants.filter((restaurant) =>
+      restaurantMatchesTerm(restaurant, normalizedSearch)
+    );
+
+    if (fullTermMatches.length > 0) {
+      return {
+        type: "restaurant",
+        matchedRestaurants: fullTermMatches,
+        inferredCategory: getDominantCategory(fullTermMatches)
+      };
+    }
+
+    const splitTerms = splitSearchTerms(normalizedSearch);
+    const splitTermMatches = restaurants.filter((restaurant) =>
+      splitTerms.some((term) => restaurantMatchesTerm(restaurant, term))
+    );
+
+    if (splitTermMatches.length > 0) {
+      return {
+        type: "restaurant",
+        matchedRestaurants: splitTermMatches,
+        inferredCategory: getDominantCategory(splitTermMatches)
+      };
+    }
+
+    const fullDictionaryCategory = inferCategoryFromDictionary([normalizedSearch]);
+
+    if (fullDictionaryCategory) {
+      return {
+        type: "dictionary",
+        matchedRestaurants: null,
+        inferredCategory: fullDictionaryCategory
+      };
+    }
+
+    const splitDictionaryCategory = inferCategoryFromDictionary(splitTerms);
+
+    return {
+      type: splitDictionaryCategory ? "dictionary" : "none",
+      matchedRestaurants: null,
+      inferredCategory: splitDictionaryCategory
+    };
+  };
+
   const getIsFranchise = (restaurant) => {
     if (typeof restaurant.is_franchise === "boolean") {
       return restaurant.is_franchise;
@@ -88,18 +228,29 @@ function ResultPage() {
 
   //call restaurant data from JSON
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/web_format_scores.json`)
-      .then((response) => response.json())
-      .then((data) => {
-        setRestaurants(data);
+    Promise.all([
+      fetch(`${import.meta.env.BASE_URL}data/web_format_scores.json`).then((response) =>
+        response.json()
+      ),
+      fetch(`${import.meta.env.BASE_URL}data/food_dictionary.json`).then((response) =>
+        response.json()
+      )
+    ])
+      .then(([restaurantData, dictionaryData]) => {
+        setRestaurants(restaurantData);
+        setFoodDictionary(dictionaryData);
       })
       .catch((error) => {
         console.error("데이터를 불러오는 데 실패했습니다:", error);
       });
   }, []);
 
+  const searchAnalysis = analyzeSearch(initialSearch);
+  const effectiveCategory =
+    hasCategoryParam ? selectedCategory : searchAnalysis.inferredCategory || selectedCategory;
+
   useEffect(() => {
-    setDraftCategory(selectedCategory);
+    setDraftCategory(effectiveCategory);
     setSearchTerm(initialSearch);
     setDraftFranchise(franchiseParam);
     setDraftWeights({
@@ -109,7 +260,7 @@ function ResultPage() {
       service: serviceWeight
     });
   }, [
-    selectedCategory,
+    effectiveCategory,
     initialSearch,
     franchiseParam,
     tasteWeight,
@@ -118,37 +269,18 @@ function ResultPage() {
     serviceWeight
   ]);
 
-  const filteredRestaurants = restaurants
-    //filter category
+  const searchCandidateRestaurants =
+    initialSearch.trim() && searchAnalysis.type === "restaurant"
+      ? searchAnalysis.matchedRestaurants
+      : restaurants;
+
+  const filteredRestaurants = searchCandidateRestaurants
+    .filter((restaurant) => categoryMatches(restaurant.category, effectiveCategory))
     .filter((restaurant) => {
-      if (selectedCategory === "전체") return true;
-      return restaurant.category === selectedCategory;
-    })
-    //filter seach bar content
-    .filter((restaurant) => {
-      if (!searchTerm.trim()) return true;
-
-      const keyword = searchTerm.toLowerCase();
-
-      const menuMatched =
-        restaurant.menus?.some((menuItem) =>
-          menuItem.toLowerCase().includes(keyword)
-        ) || false;
-
-      const searchableText = [
-        restaurant.name,
-        restaurant.description,
-        restaurant.category,
-        restaurant.category_raw,
-        restaurant.address
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return (
-        searchableText.includes(keyword) || menuMatched
-      );
+      if (!initialSearch.trim()) return true;
+      if (searchAnalysis.type === "restaurant") return true;
+      if (searchAnalysis.type === "dictionary") return true;
+      return false;
     })
     .filter((restaurant) => {
       if (franchiseParam === "all") return true;
@@ -205,7 +337,7 @@ function ResultPage() {
 
   //update URL to match with selected values
   const updateUrl = ({
-    category = selectedCategory,
+    category = effectiveCategory,
     search = searchTerm,
     sort = sortOption,
     franchise = franchiseParam,
@@ -213,29 +345,57 @@ function ResultPage() {
     price = priceWeight,
     mood = moodWeight,
     service = serviceWeight
-  }) => {
+  }, options = {}) => {
+    const { replace = false } = options;
+
     navigate(
       `/results?category=${encodeURIComponent(
         category
       )}&search=${encodeURIComponent(
         search
-      )}&sort=${sort}&franchise=${franchise}&taste=${taste}&price=${price}&mood=${mood}&service=${service}`
+      )}&sort=${sort}&franchise=${franchise}&taste=${taste}&price=${price}&mood=${mood}&service=${service}`,
+      { replace }
     );
   };
 
   const handleSearchSubmit = () => {
-    updateUrl({ search: searchTerm });
+    const nextSearchAnalysis = analyzeSearch(searchTerm);
+    const nextCategory = nextSearchAnalysis.inferredCategory || effectiveCategory;
+
+    setDraftCategory(nextCategory);
+    updateUrl({ category: nextCategory, search: searchTerm });
   };
 
   const handleSortChange = (newSort) => {
     updateUrl({ sort: newSort });
   };
 
+  const handleCategoryChange = (category) => {
+    setDraftCategory(category);
+    updateUrl({ category }, { replace: true });
+  };
+
+  const handleFranchiseChange = (franchise) => {
+    setDraftFranchise(franchise);
+    updateUrl({ franchise }, { replace: true });
+  };
+
   const handleWeightChange = (key, value) => {
-    setDraftWeights((prev) => ({
-      ...prev,
+    const nextWeights = {
+      ...draftWeights,
       [key]: Number(value)
-    }));
+    };
+
+    setDraftWeights(nextWeights);
+    updateUrl(
+      {
+        taste: nextWeights.taste,
+        price: nextWeights.price,
+        mood: nextWeights.mood,
+        service: nextWeights.service
+      },
+      { replace: true }
+    );
   };
 
   //advanced settings: apply to URL
@@ -304,7 +464,7 @@ function ResultPage() {
                 : "비프랜차이즈만"
             }
           </span>
-          <span className="info-chip">카테고리: {selectedCategory}</span>
+          <span className="info-chip">카테고리: {effectiveCategory}</span>
           <span className="info-chip">가중치: {shortPriorityText}</span>
         </div>
 
@@ -321,7 +481,7 @@ function ResultPage() {
                         ? "category-button active"
                         : "category-button"
                     }
-                    onClick={() => setDraftCategory(category)}
+                    onClick={() => handleCategoryChange(category)}
                   >
                     {category}
                   </button>
@@ -364,19 +524,19 @@ function ResultPage() {
               <div className="category-list">
                 <button
                   className={draftFranchise === "all" ? "category-button active" : "category-button"}
-                  onClick={() => setDraftFranchise("all")}
+                  onClick={() => handleFranchiseChange("all")}
                 >
                   전체
                 </button>
                 <button
                   className={draftFranchise === "yes" ? "category-button active" : "category-button"}
-                  onClick={() => setDraftFranchise("yes")}
+                  onClick={() => handleFranchiseChange("yes")}
                 >
                   프랜차이즈만
                 </button>
                 <button
                   className={draftFranchise === "no" ? "category-button active" : "category-button"}
-                  onClick={() => setDraftFranchise("no")}
+                  onClick={() => handleFranchiseChange("no")}
                 >
                   비프랜차이즈만
                 </button>

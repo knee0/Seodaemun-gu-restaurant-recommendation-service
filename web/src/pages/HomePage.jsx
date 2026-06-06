@@ -1,6 +1,44 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeRestaurantCard from "../components/HomeRestaurantCard";
+
+const CATEGORY_ORDER = [
+  "한식",
+  "중식",
+  "일식",
+  "양식",
+  "카페/디저트",
+  "분식/간편식",
+  "술집/주점",
+  "아시안/세계요리"
+];
+
+const RECOMMENDATION_TABS = {
+  lunch: {
+    label: "점심 추천",
+    title: "점심으로 이곳은 어떠세요?",
+    flag: "is_lunch_recommended"
+  },
+  dinner: {
+    label: "저녁 추천",
+    title: "저녁으로 이곳은 어떠세요?",
+    flag: "is_dinner_recommended"
+  }
+};
+
+const normalizeCategory = (category) =>
+  category === "세계요리" ? "아시안/세계요리" : category;
+
+const pickRandomRestaurants = (items, count) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled.slice(0, count);
+};
 
 function HomePage() {
   const [restaurants, setRestaurants] = useState([]);
@@ -8,27 +46,6 @@ function HomePage() {
   const [recommendationMode, setRecommendationMode] = useState("lunch");
   const categoryRailRefs = useRef({});
   const navigate = useNavigate();
-
-  const categoryOrder = [
-    "한식",
-    "중식",
-    "일식",
-    "양식",
-    "카페/디저트",
-    "분식/간편식",
-    "술집/주점"
-  ];
-
-  const recommendationTabs = {
-    lunch: {
-      label: "점심 추천",
-      flag: "is_lunch_recommended"
-    },
-    dinner: {
-      label: "저녁 추천",
-      flag: "is_dinner_recommended"
-    }
-  };
 
   //call restaurant data
   useEffect(() => {
@@ -55,7 +72,7 @@ function HomePage() {
 
   const getCategoryRestaurants = (category) =>
     restaurants
-      .filter((restaurant) => restaurant.category === category)
+      .filter((restaurant) => normalizeCategory(restaurant.category) === category)
       .sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
       .slice(0, 12);
 
@@ -69,11 +86,17 @@ function HomePage() {
     });
   };
 
-  const activeRecommendation = recommendationTabs[recommendationMode];
-  const topRestaurants = restaurants
-    .filter((restaurant) => restaurant[activeRecommendation.flag] === true)
-    .sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
-    .slice(0, 5);
+  const activeRecommendation = RECOMMENDATION_TABS[recommendationMode];
+  const topRestaurants = useMemo(() => {
+    const candidates = restaurants.filter((restaurant) => {
+      if (restaurant[activeRecommendation.flag] !== true) return false;
+      if (normalizeCategory(restaurant.category) === "카페/디저트") return false;
+
+      return true;
+    });
+
+    return pickRandomRestaurants(candidates, 5);
+  }, [activeRecommendation.flag, recommendationMode, restaurants]);
 
   return (
     <div className="home-page">
@@ -99,7 +122,7 @@ function HomePage() {
         <h2 className="section-title">카테고리별 추천 맛집</h2>
 
         <div className="category-rail-list">
-          {categoryOrder.map((category, index) => {
+          {CATEGORY_ORDER.map((category) => {
             const categoryRestaurants = getCategoryRestaurants(category);
 
             if (categoryRestaurants.length === 0) {
@@ -110,7 +133,8 @@ function HomePage() {
               <section className="category-rail-section" key={category}>
                 <div className="category-rail-header">
                   <h3>
-                    <span>{index + 1}.</span> {category}
+                    {category}
+                    <span>{categoryRestaurants.length}곳</span>
                   </h3>
                 </div>
 
@@ -174,10 +198,10 @@ function HomePage() {
 
       <section className="top-section">
         <div className="section-heading-row">
-          <h2 className="section-title">{activeRecommendation.label} TOP 5</h2>
+          <h2 className="section-title">{activeRecommendation.title}</h2>
 
           <div className="recommendation-tabs" aria-label="추천 시간대 선택">
-            {Object.entries(recommendationTabs).map(([key, tab]) => (
+            {Object.entries(RECOMMENDATION_TABS).map(([key, tab]) => (
               <button
                 key={key}
                 className={

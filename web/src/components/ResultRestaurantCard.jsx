@@ -2,6 +2,9 @@ import { useNavigate } from "react-router-dom";
 import RestaurantImage from "./RestaurantImage";
 import StarRating from "./StarRating";
 
+const normalizeCategory = (category) =>
+  category === "세계요리" ? "아시안/세계요리" : category;
+
 function ResultRestaurantCard({ restaurant }) {
   const navigate = useNavigate();
   const mainScore = restaurant.recommendationScore ?? restaurant.total_score ?? 0;
@@ -25,7 +28,7 @@ function ResultRestaurantCard({ restaurant }) {
       <div className="restaurant-card-body">
         <div className="restaurant-card-header">
           <h3>{restaurant.name}</h3>
-          <span className="category-badge">{restaurant.category}</span>
+          <span className="category-badge">{normalizeCategory(restaurant.category)}</span>
         </div>
 
         {description && <p className="restaurant-description">{description}</p>}

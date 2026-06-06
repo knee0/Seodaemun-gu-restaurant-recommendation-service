@@ -5,11 +5,23 @@ import HomeRestaurantCard from "../components/HomeRestaurantCard";
 function HomePage() {
   const [restaurants, setRestaurants] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [recommendationMode, setRecommendationMode] = useState("lunch");
   const navigate = useNavigate();
+
+  const recommendationTabs = {
+    lunch: {
+      label: "점심 추천",
+      flag: "is_lunch_recommended"
+    },
+    dinner: {
+      label: "저녁 추천",
+      flag: "is_dinner_recommended"
+    }
+  };
 
   //call restaurant data
   useEffect(() => {
-    fetch("/data/web_mock_restaurants.json")
+    fetch(`${import.meta.env.BASE_URL}data/web_format_scores.json`)
       .then((response) => response.json())
       .then((data) => {
         setRestaurants(data);
@@ -25,7 +37,11 @@ function HomePage() {
   };
   
 
-  const topRestaurants = restaurants.slice(0, 6);
+  const activeRecommendation = recommendationTabs[recommendationMode];
+  const topRestaurants = restaurants
+    .filter((restaurant) => restaurant[activeRecommendation.flag] === true)
+    .sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
+    .slice(0, 5);
 
   return (
     <div className="home-page">
@@ -48,7 +64,26 @@ function HomePage() {
       </section>
 
       <section className="top-section">
-        <h2 className="section-title">인기 맛집 TOP 6</h2>
+        <div className="section-heading-row">
+          <h2 className="section-title">{activeRecommendation.label} TOP 5</h2>
+
+          <div className="recommendation-tabs" aria-label="추천 시간대 선택">
+            {Object.entries(recommendationTabs).map(([key, tab]) => (
+              <button
+                key={key}
+                className={
+                  recommendationMode === key
+                    ? "recommendation-tab active"
+                    : "recommendation-tab"
+                }
+                onClick={() => setRecommendationMode(key)}
+                type="button"
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="restaurant-grid">
           {topRestaurants.map((restaurant) => (

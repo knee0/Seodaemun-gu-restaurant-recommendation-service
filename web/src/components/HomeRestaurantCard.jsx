@@ -4,6 +4,7 @@ import StarRating from "./StarRating";
 
 function HomeRestaurantCard({ restaurant }) {
   const navigate = useNavigate();
+  const description = restaurant.description || restaurant.category_raw || restaurant.address;
 
   return (
     <div
@@ -18,11 +19,13 @@ function HomeRestaurantCard({ restaurant }) {
           <span className="category-badge">{restaurant.category}</span>
         </div>
 
-        <p className="restaurant-description">{restaurant.description}</p>
+        {description && <p className="restaurant-description">{description}</p>}
 
         <div className="restaurant-meta">
           <StarRating score={restaurant.total_score} />
-          <span>리뷰 {restaurant.review_count}개</span>
+          {typeof restaurant.review_count === "number" && (
+            <span>리뷰 {restaurant.review_count}개</span>
+          )}
         </div>
       </div>
     </div>

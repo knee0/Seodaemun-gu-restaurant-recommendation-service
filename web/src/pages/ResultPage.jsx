@@ -57,16 +57,19 @@ function ResultPage() {
     service: serviceWeight
   });
 
-  const labelMap = {
-    taste: "음식",
-    price: "가격",
-    mood: "분위기",
-    service: "서비스"
-  };
+  const scoreItems = [
+    { weightKey: "taste", scoreKey: "food", label: "음식" },
+    { weightKey: "price", scoreKey: "price", label: "가격" },
+    { weightKey: "mood", scoreKey: "mood", label: "분위기" },
+    { weightKey: "service", scoreKey: "service", label: "서비스" }
+  ];
+
+  const getScoreValue = (restaurant, scoreKey) =>
+    Number(restaurant.scores?.[scoreKey] || 0);
 
   //call restaurant data from JSON
   useEffect(() => {
-    fetch("/data/web_mock_restaurants.json")
+    fetch(`${import.meta.env.BASE_URL}data/web_format_scores.json`)
       .then((response) => response.json())
       .then((data) => {
         setRestaurants(data);
@@ -110,15 +113,23 @@ function ResultPage() {
       const keyword = searchTerm.toLowerCase();
 
       const menuMatched =
-        restaurant.menu?.some((menuItem) =>
+        restaurant.menus?.some((menuItem) =>
           menuItem.toLowerCase().includes(keyword)
         ) || false;
 
+      const searchableText = [
+        restaurant.name,
+        restaurant.description,
+        restaurant.category,
+        restaurant.category_raw,
+        restaurant.address
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
       return (
-        restaurant.name.toLowerCase().includes(keyword) ||
-        restaurant.description.toLowerCase().includes(keyword) ||
-        restaurant.category.toLowerCase().includes(keyword) ||
-        menuMatched
+        searchableText.includes(keyword) || menuMatched
       );
     })
     .filter((restaurant) => {
@@ -128,27 +139,26 @@ function ResultPage() {
       return true;
     });
 
-  const allScoreKeys = ["taste", "price", "mood", "service"];
-
   //calc
   const scoredRestaurants = filteredRestaurants.map((restaurant) => {
     let weightedScore = 0;
 
-    const rawWeights = allScoreKeys.map((key) => weightValues[key] || 0);
+    const rawWeights = scoreItems.map((item) => weightValues[item.weightKey] || 0);
     const totalWeight = rawWeights.reduce((sum, value) => sum + value, 0);
 
     //no weights = no advanced setting
     if (!hasCustomWeights) {
-      const equalWeight = 1 / allScoreKeys.length;
+      const equalWeight = 1 / scoreItems.length;
 
-      weightedScore = allScoreKeys.reduce((sum, key) => {
-        return sum + (restaurant.scores[key] || 0) * equalWeight;
+      weightedScore = scoreItems.reduce((sum, item) => {
+        return sum + getScoreValue(restaurant, item.scoreKey) * equalWeight;
       }, 0);
     } else {
       //유저 설정 가중치
-      weightedScore = allScoreKeys.reduce((sum, key) => {
-        const normalizedWeight = (weightValues[key] || 0) / totalWeight;
-        return sum + (restaurant.scores[key] || 0) * normalizedWeight;
+      weightedScore = scoreItems.reduce((sum, item) => {
+        const normalizedWeight =
+          totalWeight > 0 ? (weightValues[item.weightKey] || 0) / totalWeight : 0;
+        return sum + getScoreValue(restaurant, item.scoreKey) * normalizedWeight;
       }, 0);
     }
 
@@ -161,7 +171,7 @@ function ResultPage() {
   //sorting restaurant cards
   const rankedRestaurants = [...scoredRestaurants].sort((a, b) => {
     if (sortOption === "reviews") {
-      return b.review_count - a.review_count;
+      return (b.review_count || 0) - (a.review_count || 0);
     }
 
     if (sortOption === "rating") {

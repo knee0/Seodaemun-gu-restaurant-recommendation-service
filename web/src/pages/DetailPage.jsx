@@ -17,7 +17,7 @@ function DetailPage() {
 
   //fetch restaurant data from restaurant ID in URL
   useEffect(() => {
-    fetch("/data/web_mock_restaurants.json")
+    fetch(`${import.meta.env.BASE_URL}data/web_format_scores.json`)
       .then((response) => response.json())
       .then((data) => {
         const found = data.find((item) => item.id === id);
@@ -53,14 +53,18 @@ function DetailPage() {
         <div className="detail-header">
           <div>
             <h1>{restaurant.name}</h1>
-            <p className="detail-description">{restaurant.description}</p>
+            <p className="detail-description">
+              {restaurant.description || restaurant.category_raw || restaurant.address}
+            </p>
           </div>
           <span className="category-badge">{restaurant.category}</span>
         </div>
 
         <div className="detail-rating-summary">
           <StarRating score={restaurant.total_score} />
-          <span className="detail-review-count">({restaurant.review_count}개 리뷰)</span>
+          {typeof restaurant.review_count === "number" && (
+            <span className="detail-review-count">({restaurant.review_count}개 리뷰)</span>
+          )}
         </div>
 
         <section className="detail-section">
@@ -68,7 +72,7 @@ function DetailPage() {
           <div className="detail-score-list">
             <div className="detail-score-row">
               <span className="detail-score-label">음식</span>
-              <StarRating score={restaurant.scores.taste} />
+              <StarRating score={restaurant.scores.food} />
             </div>
             <div className="detail-score-row">
               <span className="detail-score-label">분위기</span>
@@ -93,7 +97,7 @@ function DetailPage() {
 
           <div className="detail-map-buttons">
             <a
-              href={restaurant.naver_map_url || "#"}
+              href={restaurant.naver_url || "#"}
               target="_blank"
               rel="noreferrer"
               className="naver-map-button"

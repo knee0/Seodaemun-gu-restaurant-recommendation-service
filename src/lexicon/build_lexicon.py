@@ -42,7 +42,7 @@ stopwords = {
     "움직이", "흐름", "차지", "마주치", "어머님", "셀러드", "닿", "여직원", "신관", "달", "좀", "조금", "그렇",
     "다만", "일본어", "나름", "샤브", "크기", "이것저것", "놓", "끄", "닫", "붙", "두", "걸", "중년", "비바보사",
     "애니", "프랜차이즈", "단순", "만지", "아주머니", "어마어마하", "쎄", "흔", "보트", "노트북", "낯설", "식",
-    "완젼", "과제", "깡패", "길", "드세", "오마카세", "특선"
+    "완젼", "과제", "깡패", "길", "드세", "오마카세", "특선", "인하", "끼"
 }
 
 # 현재 각 단어는 토큰화되어 '맛있/NNG' 형태로 저장되어 있습니다. 
@@ -52,10 +52,6 @@ stopwords = {
 data = load_json(INPUT)
 kiwi = Kiwi()
 cleaned_docs = []
-word_to_tag = {}
-
-def make_key(word, tag):
-    return f"{word}/{tag}" if tag.startswith('N') else word
 
 for rev in data:
     raw_text = rev["raw"]
@@ -68,14 +64,11 @@ for rev in data:
         for token in tokens:
             word = token.form
             tag = token.tag
-
             if (not word) or (word in stopwords):
                 continue
 
-            if tag.startswith('N') or tag.startswith('V') or tag.startswith('X') or tag.startswith('M'):
-                combined_token = make_key(word, tag)
-                word_to_tag[combined_token] = tag
-                doc.append(combined_token)
+            word_tag = f"{word}/{tag}"
+            doc.append(word_tag)
 
         if doc: 
             cleaned_docs.append(doc)
@@ -91,52 +84,18 @@ w2v_model = Word2Vec(
     seed=42,
 )
 
-def auto_bind_tags(pure_seeds_dict, word_to_tag_dict):
-    bound_seeds_dict = {}
-    
-    for category, words in pure_seeds_dict.items():
-        bound_words = []
-        for word in words:
-            # "피자/NNG"에서 "피자" 추출
-            matched_tokens = [
-                token for token in word_to_tag_dict.keys() 
-                if (token.split('/')[0] if '/' in token else token) == word
-            ]
-            
-            if matched_tokens:
-                # 동음이의어가 있다면 모두 포함
-                bound_words.extend(matched_tokens)
-            else:
-                # 데이터셋에 없는 단어라면 일단 단어 그대로 넣어둠
-                bound_words.append(word)
-                
-        bound_seeds_dict[category] = bound_words
-        
-    return bound_seeds_dict
-
 
 # 속성 사전을 제작합니다. 
 
 # 속성 기준 단어 (감정 단어와 결합)
 aspect_seeds = {
-    "음식": ["맛", "음식", "반찬", "식사", "요리", "위생", "양/NNG", "메뉴", "재료", "디저트"],
-    "서비스": ["사장", "직원", "알바", "손님", "태도", "말투", "서비스", "응대", "예약", "주문"],
-    "분위기": ["분위기", "뷰", "인테리어", "화장실", "에어컨", "청결", "조명", "노래", "매장", "실내", "내부", "가게", "실내"],
-    "가격": ["가성비", "가격", "물가", "값", "금액", "가격대", "비용", "혜자", "할인"],
+    "음식": ["맛/NNG", "음식/NNG", "반찬/NNG", "식사/NNG", "요리/NNG", "위생/NNG", "메뉴/NNG", "재료/NNG", "디저트/NNG"],
+    "서비스": ["사장/NNG", "직원/NNG", "알바/NNG", "손님/NNG", "태도/NNG", "말투/NNG", "서비스/NNG", "응대/NNG", "예약/NNG", "주문/NNG"],
+    "분위기": ["분위기/NNG", "뷰/NNG", "인테리어/NNG", "화장실/NNG", "에어컨/NNG", "청결/NNG", "조명/NNG", "노래/NNG", "매장/NNG", "실내/NNG", "내부/NNG", "가게/NNG"],
+    "가격": ["가성비/NNG", "가격/NNG", "물가/NNG", "값/NNG", "금액/NNG", "가격대/NNG", "비용/NNG"],
 }
-aspect_seeds = auto_bind_tags(aspect_seeds, word_to_tag)
 
-# 명사만 사용합니다. (속성 요소를 포함한 다른 품사 단어는 복합 사전에 작성합니다.)
-aspect_tags = {"NNG"}
 
-# 해당 기준치보다 유사도가 높은 단어를 수집합니다.
-BASE_THRESHOLD = 0.7
-
-# 다른 카테고리와의 유사도가 기준치 이상으로 차이 나는 단어를 수집합니다.
-# 음식 0.7, 서비스 0.65 -> 음식 관련 단어라고 확신하기 어려움.
-RELATIVE_MARGIN = 0.15
-
-# 마지막에 속성 사전에 정의하기 위해, 단어별 가장 유사한 속성을 저장합니다.
 word_best = {}
 
 # 카테고리별 기준 단어 정리하기
@@ -151,60 +110,6 @@ for asp, seeds in aspect_seeds.items():
         word_best[s] = (asp, 1.0)
 
 
-# 속성 사전의 후보를 저장합니다.
-candidate_words = set()
-
-for asp, v_seeds in aspect_seeds.items():
-    # 각 속성의 기준점과 가장 유사한 100개의 단어를 탐색합니다.
-    for word, score in w2v_model.wv.most_similar(positive = v_seeds, topn = 100):
-
-        # 이미 최상위 단어로 설정된 기준 단어는 패스합니다.
-        if word in word_best:
-            continue
-
-        tag = word_to_tag.get(word, "")
-
-        if not (tag in aspect_tags):
-            continue
-
-        candidate_words.add(word)
-
-
-# 후보를 검사하여 속성 사전에 추가합니다.
-for word in candidate_words:
-    tag = word_to_tag.get(word, "")
-    asp_scores = {}
-
-    for asp, v_seeds in aspect_seeds.items():
-
-        # 속성 단어는 워낙 종류가 다양하여 기준점을 계산하기 어렵습니다.
-        # 모든 단어와의 유사도를 계산하고, 가장 높은 유사도를 '속성 유사도'로 처리합니다.
-        score = max(w2v_model.wv.distances(word, v_seeds))
-
-        # 각 속성의 유사도를 저장합니다.
-        asp_scores[asp] = score
-
-    # 각 속성의 유사도를 내림차순으로 정리합니다.
-    sorted_asps = sorted(asp_scores.items(), key = lambda x: x[1], reverse = True)
-
-    # 가장 유사도가 높았던 속성을 파악합니다.
-    best_asp, best_score = sorted_asps[0]
-
-    # 유사도가 기준치를 넘는지 검사합니다.
-    if best_score < BASE_THRESHOLD:
-        continue
-
-    # 기준치를 넘는 속성이 여럿 있었다면, 속성 간 유사도를 점검합니다.
-    # 속성 간 유사도의 차이(음식: 0.9, 서비스: 0.85 -> 0.05)가 기준치를 넘는지 검사합니다.
-    if len(sorted_asps) > 1:
-        second_asp, second_score = sorted_asps[1]
-        if (best_score - second_score) <= RELATIVE_MARGIN:
-            continue
-
-    # 모든 검사를 통과했으면, 해당 속성을 단어의 속성으로 저장합니다.
-    word_best[word] = (best_asp, best_score)
-
-
 # [속성: 단어] 형태로 속성 사전을 완성합니다.
 aspect_lexicon = {asp: [] for asp in aspect_seeds}
 for word, (asp, _) in word_best.items():
@@ -217,51 +122,25 @@ for word, (asp, _) in word_best.items():
 
 # 감정 기준 단어 (속성 단어와 결합)
 general_seeds = {
-    "pos": ["좋", "잘", "추천", "재밌", "반하", "짱", "최고", "탁월", "뛰어나", "빠르", "대단하"],
-    "neg": ["싫", "별로", "최악", "당황", "황당", "실망", "불만", "불편", "불쾌", 
-    "번거롭", "엉망", "심각", "심하", "형편없"]
+    "pos": ["좋/VA", "잘/MAG", "추천/NNG", "재밌/VA", "반하/VV", "짱/NNG", "최고/NNG", "탁월/XR", "뛰어나/VA", "빠르/VA", "대단/XR"],
+    "neg": ["싫/VA", "별로/MAG", "최악/NNG", "당황/NNG", "황당/XR", "실망/NNG", "불만/NNG", "불편/NNG", "불쾌/XR", "번거롭/VA", "엉망/NNG", "심각/XR", "심하/VA", "형편없/VA"]
 }
-
-general_seeds = auto_bind_tags(general_seeds, word_to_tag)
 
 # 속성 & 감정 복합 단어 (단독으로 속성 + 감정을 결정하는 단어)
 anchor_pos_seeds = {
-    "음식_긍정": ["맛있", "맛나", "맛집", "가득", "든든", "간결", "신선", "배부르", "푸짐하", "든든히", "듬뿍", "보들보들", "야들야들"],
-    "서비스_긍정": ["친절", "바로", "금방", "신속", "굽", "빠르", "챙기", "설명", "세심히", "섬세", "후하"],
-    "분위기_긍정": ["깔끔", "감성", "쾌적", "예쁘", "조용하", "조곤조곤", "느좋", "넓", "이쁘", "편하", "한가", "소담", "한산"],
-    "가격_긍정": ["저렴", "싸", "값싸", "착하", "혜자"]
+    "음식_긍정": ["맛있/VA", "맛나/VA", "맛집/NNG", "가득/MAG", "든든/XR", "간결/XR", "신선/XR", "배부르/VA", "푸짐하/VA", "든든히/MAG", "듬뿍/MAG", "보들보들/MAG", "야들야들/MAG"],
+    "서비스_긍정": ["친절/NNG", "바로/MAG", "금방/MAG", "신속/NNG", "굽/VV", "빠르/VA", "챙기/VV", "설명/NNG", "세심히/MAG", "섬세/XR", "후하/VA"],
+    "분위기_긍정": ["깔끔/XR", "감성/NNG", "쾌적/XR", "예쁘/VA", "조용하/VA", "조곤조곤/MAG", "느좋/NNG", "넓/VA", "이쁘/VA", "편하/VA", "한가/XR", "소담/XR", "한산/XR"],
+    "가격_긍정": ["저렴/XR", "싸/VA", "값싸/VA", "착하/VA", "혜자/NNG", "할인/NNG"]
 }
-anchor_pos_seeds = auto_bind_tags(anchor_pos_seeds, word_to_tag)
 
 anchor_neg_seeds = {
-    "음식_부정": ["맛없", "잡내", "상하", "비리", "느끼하", "질기", "더부룩", "눅눅", "뻑뻑하", "밍밍",
-    "물리", "퍼지", "딱딱하", "퍽퍽하", "태우", "딱딱"],
-
-    "서비스_부정": ["불친절", "건성", "한숨", "퉁명", "느리", "불쾌", "어이없", "무시", "적반하장", 
-    "짜증", "누락", "답답하", "화나", "거슬리", "째려보", "독촉", "비매너", "노려보", "방치", "지르", "화내"],
-
-    "분위기_부정": ["악취", "혼잡", "시끄럽", "더럽", "협소", "좁", "불편", "정신없", 
-    "시장통", "노후", "낡", "기름때", "먼지", "산만", "시끌벅적", "지저분", "시끌시끌"], 
-
-    "가격_부정": ["비싸", "사악", "인상", "오르"]
+    "음식_부정": ["맛없/VA", "잡내/NNG", "상하/VV", "비리/VA", "느끼하/VA", "질기/VA", "더부룩/XR", "눅눅/XR", "뻑뻑하/VA", "밍밍/XR", "물리/VV", "퍼지/VV", "딱딱하/VA", "퍽퍽하/VA", "태우/VV", "딱딱/XR", "묽/VA"],
+    "서비스_부정": ["불친절/NNG", "건성/NNG", "한숨/NNG", "퉁명/XR", "느리/VA", "불쾌/XR", "어이없/VA", "무시/NNG", "적반하장/NNG", "짜증/NNG", "누락/NNG", "답답하/VA", "화나/VV", "거슬리/VV", "째려보/VV", "독촉/NNG", "비매너/NNG", "노려보/VV", "방치/NNG", "지르/VV", "화내/VV"],
+    "분위기_부정": ["악취/NNG", "혼잡/NNG", "시끄럽/VA", "더럽/VA", "협소/XR", "좁/VA", "불편/NNG", "정신없/VA", "시장통/NNG", "노후/NNG", "낡/VA", "기름때/NNG", "먼지/NNG", "산만/XR", "시끌벅적/MAG", "지저분/XR", "시끌시끌/MAG"], 
+    "가격_부정": ["비싸/VA", "사악/NNG", "인상/NNG", "오르/VV"]
 }
-anchor_neg_seeds = auto_bind_tags(anchor_neg_seeds, word_to_tag)
 
-direct_pos_seeds = {
-    "음식_긍정": ["배부르", "푸짐하", "든든히", "듬뿍", "보들보들", "야들야들"],
-    "서비스_긍정": ["빠르", "챙기", "설명", "세심히", "섬세하"],
-    "분위기_긍정": ["넓", "이쁘", "편하", "한가", "소담", "한산"],
-    "가격_긍정": ["착하", "혜자"]
-}
-direct_pos_seeds = auto_bind_tags(direct_pos_seeds, word_to_tag)
-
-direct_neg_seeds = {
-    "음식_부정": ["뻑뻑하", "퍽퍽하", "딱딱", "밍밍", "물리", "부실하", "묽"],
-    "서비스_부정": ["독촉", "무시", "비매너", "노려보", "방치", "싸가지", "지르", "화내"],
-    "분위기_부정": ["산만", "시끌벅적", "지저분", "시끌시끌"],
-    "가격_부정": ["오르"],
-}
-direct_neg_seeds = auto_bind_tags(direct_neg_seeds, word_to_tag)
 
 valid_general_seeds = {}
 
@@ -280,7 +159,7 @@ p_norm, n_norm = np.linalg.norm(p_avg), np.linalg.norm(n_avg)
 specific_sentiment_map = {}
 
 # 일단 기준 단어 사전에 첨가
-all_seeds = [anchor_pos_seeds, anchor_neg_seeds, direct_pos_seeds, direct_neg_seeds]
+all_seeds = [anchor_pos_seeds, anchor_neg_seeds]
 for seed_dict in all_seeds:
     for group_name, seeds in seed_dict.items():
         for s in seeds:
@@ -292,23 +171,23 @@ for seed_dict in all_seeds:
 all_anchor_groups = {**anchor_pos_seeds, **anchor_neg_seeds}
 
 # 동사, 형용사만 수집합니다.
-specified_tags = {"VA"}
+specified_tags = {"VA", "XR", "VV", "MAG"}
 
 # 해당 기준치보다 유사도가 높은 단어만 수집합니다.
-SPECIFIED_SENTIMENT_THRESHOLD = 0.4
+SPECIFIED_SENTIMENT_THRESHOLD = 0.55
 
 for group_name, seeds in all_anchor_groups.items():
     valid_seeds = [s for s in seeds if s in w2v_model.wv]
 
     # 각 속성의 기준 단어의 기준점을 구하고, 가장 가까운 단어 50개를 수집합니다.
-    for candidate, sim in w2v_model.wv.most_similar(positive=valid_seeds, topn=50):
+    for candidate, sim in w2v_model.wv.most_similar(positive=valid_seeds, topn=100):
         
         # 기준치보다 유사도가 높은지 검사합니다.
         if sim < SPECIFIED_SENTIMENT_THRESHOLD:
             continue
             
         # 수집하려는 품사인지 검사합니다.
-        tag = word_to_tag.get(candidate, "")
+        tag = candidate.split('/')[-1]
         if not (tag in specified_tags):
             continue
 
@@ -345,32 +224,35 @@ for group_name, seeds in all_anchor_groups.items():
 # 이제 일반 감정 사전을 정의합니다.
 sentiment_lexicon = {}
 
-SENTIMENT_THRESHOLD = 0.3
-sentiment_tags = {"VA"}
+SENTIMENT_THRESHOLD = 0.55
+sentiment_tags = {"VA", "VV", "MAG", "XR"}
 
-for word in w2v_model.wv.index_to_key:
-    tag = word_to_tag.get(word, "")
-    
-    # 수집하려는 품사인지 검사합니다.
-    if not (tag in sentiment_tags):
+all_words = w2v_model.wv.index_to_key
+vectors = w2v_model.wv.vectors
+norms = np.linalg.norm(vectors, axis=1)
+
+all_sim_p = np.dot(vectors, p_avg) / (norms * p_norm)
+all_sim_n = np.dot(vectors, n_avg) / (norms * n_norm)
+all_scores = all_sim_p - all_sim_n
+
+for idx, word in enumerate(all_words):
+    tag = word.split('/')[-1]
+    if tag not in sentiment_tags:
         continue
 
-    # 위와 같은 방식으로 단어의 감정 점수를 계산합니다.
-    w_vec = w2v_model.wv[word]
-    w_norm = np.linalg.norm(w_vec)
+    if word in specific_sentiment_map:
+        continue
 
-    sim_p = np.dot(w_vec, p_avg) / (w_norm * p_norm)
-    sim_n = np.dot(w_vec, n_avg) / (w_norm * n_norm)
-    sentiment_lexicon[word] = sim_p - sim_n
+    sentiment_lexicon[word] = all_scores[idx]
 
-# 감정 점수를 -1 ~ 1 범위로 정규화하여 저장합니다.
-max_abs_score = max(abs(s) for w, s in sentiment_lexicon.items())
-sentiment_lexicon = {
-    w: round(float(s / max_abs_score), 4)
-    for w, s in sentiment_lexicon.items()
-    if abs(float(s / max_abs_score)) > SENTIMENT_THRESHOLD
-}
-
+# Normalize scores
+if sentiment_lexicon:
+    max_abs_score = max(abs(s) for s in sentiment_lexicon.values())
+    sentiment_lexicon = {
+        w: round(float(s / max_abs_score), 4)
+        for w, s in sentiment_lexicon.items()
+        if abs(float(s / max_abs_score)) > SENTIMENT_THRESHOLD
+    }
 
 
 # 완성된 사전을 .json 파일로 저장합니다.

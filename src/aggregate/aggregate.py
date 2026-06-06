@@ -5,7 +5,12 @@ INPUT = SCORES / "bert_scores.json"
 METADATA = PREP / "metadata.json"
 FINAL = SCORES / "final_scores.json"
 
-CONFIDENCE = 10
+ASPECT_CONFIDENCE = {
+    '음식': 12,      # High volume (85%): Needs a strong anchor
+    '서비스': 5,     # Medium volume (25%): Balanced anchor
+    '분위기': 5,     # Medium volume (23%): Balanced anchor
+    '가격': 3        # Low volume (8%): Needs a very light touch to be dynamic
+}
 
 def aggregate_aspect_scores():
     bert_scores = load_json(INPUT)
@@ -74,13 +79,14 @@ def aggregate_aspect_scores():
         for aspect in ASPECTS:
             count = cur_counts[aspect]
             avg = global_avg[aspect]
+            conf = ASPECT_CONFIDENCE[aspect]
 
             if count > 0:
                 score_sum = cur_scores[aspect]
-                avg_sum = CONFIDENCE * avg
+                avg_sum = conf * avg
 
                 # Apply Bayesian Smoothing
-                smoothed_score = (score_sum + avg_sum) / (count + CONFIDENCE)
+                smoothed_score = (score_sum + avg_sum) / (count + conf)
                 avg_scores[aspect] = round(smoothed_score * 5, 4)
             else:
                 # 리뷰가 없는 속성은 글로벌 평균 값으로 부여.

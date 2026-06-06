@@ -9,7 +9,7 @@ SPECIFIC_MAP = LEXICON / "specific_sentiment_map.json"
 OUTPUT = SCORES / "lexicon_scores.json"
 
 def make_key(word, tag):
-    return f"{word}/{tag}" if tag.startswith('N') else word
+    return f"{word}/{tag}"
 
 # 감정 단어 주위를 얼마나 살펴볼 것인지 정의합니다. (3: 주위의 세 단어)
 DEFAULT_WINDOW_SIZE = 5
@@ -26,21 +26,8 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
 
         valid_indices = [
             i for i, t in enumerate(tokens) 
-            if not (t.tag.startswith('J') or t.tag.startswith('S'))
+            if not (t.tag.startswith('J') or t.tag.startswith('S') or t.tag.startswith('E'))
         ]
-
-        boundary_indices = {
-            i for i, t in enumerate(tokens)
-            if (t.form in ['지만', '는데', '으나'])
-        }
-
-        # start, end 사이에 절이 달라지는지 검사합니다.
-        def is_blocked(start, end):
-            s, e = min(start, end), max(start, end)
-            return any(s <= b <= e for b in boundary_indices)
-
-        last_seen_aspect = None
-        last_seen_aspect_idx = -1
 
         sentiment_positions = []
         for i in valid_indices:
@@ -57,16 +44,15 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
 
             # 반전 표현이 나오면 감정을 뒤집습니다. (긍정 -> 부정)
             neg_left, neg_right = False, False
-            for i in range(max(0, idx - 3), idx):
-                if (tokens[i].form == "안" and tokens[i].tag == "MAG"):
+            for i in range(max(0, idx - 2), idx):
+                if (tokens[i].form == "안" and tokens[i].tag == "MAG") or (tokens[i].form == "불" and tokens[i].tag == "XPN"):
                     neg_left = True
             # 뒤에 '않다', '없다' 검사
-            for i in range(idx + 1, min(len(tokens), idx + 4)):
+            for i in range(idx + 1, min(len(tokens), idx + 3)):
                 if tokens[i].form in ["않", "없", "없이"] or (tokens[i].form == "안" and tokens[i].tag == "MAG"):
                     neg_right = True
 
             is_negated = neg_left or neg_right
-
 
             if combined_word in specific_sentiment_map:
                 aspect, polarity = specific_sentiment_map[combined_word].split('_')
@@ -79,14 +65,10 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
                 if is_negated: assigned_score = -assigned_score
 
                 review_aspect_scores[aspect].append(assigned_score)
-                last_seen_aspect = aspect
-                last_seen_aspect_idx = idx
                 continue 
-
 
             score = sentiment_lexicon[combined_word]
             if is_negated: score = -score
-
 
             # 일반 감정 단어의 경우, 가장 가까운 속성 단어를 탐색합니다.
             current_pos = valid_idx_to_pos[idx]
@@ -100,24 +82,12 @@ def find_aspect_sentiment(raw_text, aspect_lexicon, sentiment_lexicon, find_aspe
                         near_combined = make_key(near_token.form, near_token.tag)
                         
                         if near_combined in find_aspect:
-                            if not is_blocked(idx, near_idx):
-                                aspect = find_aspect[near_combined]
-                                review_aspect_scores[aspect].append(score)
-                                last_seen_aspect = aspect
-                                last_seen_aspect_idx = near_idx
-                                aspect_found = True
-                                break
+                            aspect = find_aspect[near_combined]
+                            review_aspect_scores[aspect].append(score)
+                            aspect_found = True
+                            break
                 if aspect_found:
                     break
-
-
-            # 문장 내에서 마지막으로 발견된 속성을 last_seen_aspect에 저장합니다. 
-            # 이번 감성 단어 주변에 속성 단어가 없었다면, 이전 속성에 감정 점수를 부여합니다.
-            if not aspect_found and last_seen_aspect:
-                # 중간에 절 분리 단어가 있으면, 해당 속성으로 연결하지 않습니다.
-                if not is_blocked(last_seen_aspect_idx, idx):
-                    review_aspect_scores[last_seen_aspect].append(score)
-                last_seen_aspect = None
 
 
     # 위의 과정을 거치면, 리뷰마다 속성별로 다양한 점수를 갖게 됩니다.

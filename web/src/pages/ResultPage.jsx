@@ -4,7 +4,6 @@ import ResultRestaurantCard from "../components/ResultRestaurantCard";
 
 function ResultPage() {
   const [restaurants, setRestaurants] = useState([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,7 +37,16 @@ function ResultPage() {
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
 
-  const categories = ["전체", "한식", "양식", "일식", "카페"];
+  const categories = [
+    "전체",
+    "한식",
+    "중식",
+    "일식",
+    "양식",
+    "카페/디저트",
+    "분식/간편식",
+    "술집/주점"
+  ];
 
   const weightItems = [
     { key: "taste", label: "음식" },
@@ -48,7 +56,6 @@ function ResultPage() {
   ];
 
   const [draftCategory, setDraftCategory] = useState(selectedCategory);
-  const [draftSearch, setDraftSearch] = useState(initialSearch);
 
   const [draftWeights, setDraftWeights] = useState({
     taste: tasteWeight,
@@ -67,6 +74,18 @@ function ResultPage() {
   const getScoreValue = (restaurant, scoreKey) =>
     Number(restaurant.scores?.[scoreKey] || 0);
 
+  const getIsFranchise = (restaurant) => {
+    if (typeof restaurant.is_franchise === "boolean") {
+      return restaurant.is_franchise;
+    }
+
+    if (typeof restaurant.is_franchise === "string") {
+      return restaurant.is_franchise.toLowerCase() === "true";
+    }
+
+    return false;
+  };
+
   //call restaurant data from JSON
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/web_format_scores.json`)
@@ -81,7 +100,6 @@ function ResultPage() {
 
   useEffect(() => {
     setDraftCategory(selectedCategory);
-    setDraftSearch(initialSearch);
     setSearchTerm(initialSearch);
     setDraftFranchise(franchiseParam);
     setDraftWeights({
@@ -134,8 +152,8 @@ function ResultPage() {
     })
     .filter((restaurant) => {
       if (franchiseParam === "all") return true;
-      if (franchiseParam === "yes") return restaurant.is_franchise === true;
-      if (franchiseParam === "no") return restaurant.is_franchise === false;
+      if (franchiseParam === "yes") return getIsFranchise(restaurant);
+      if (franchiseParam === "no") return !getIsFranchise(restaurant);
       return true;
     });
 
@@ -220,21 +238,19 @@ function ResultPage() {
     }));
   };
 
-  //advanced settings: apply to URL and close panel
+  //advanced settings: apply to URL
   const handleApplyAdvanced = () => {
     navigate(
       `/results?category=${encodeURIComponent(
         draftCategory
       )}&search=${encodeURIComponent(
-        draftSearch
+        searchTerm
       )}&sort=${sortOption}&franchise=${draftFranchise}&taste=${
         draftWeights.taste
       }&price=${draftWeights.price}&mood=${draftWeights.mood}&service=${
         draftWeights.service
       }`
     );
-
-    setShowAdvanced(false);
   };
 
   //show current weight values
@@ -276,12 +292,6 @@ function ResultPage() {
             }}
           />
           <button onClick={handleSearchSubmit}>검색</button>
-          <button
-            className="advanced-button"
-            onClick={() => setShowAdvanced((prev) => !prev)}
-          >
-            고급설정
-          </button>
         </div>
 
         <div className="result-info-bar">
@@ -298,7 +308,7 @@ function ResultPage() {
           <span className="info-chip">가중치: {shortPriorityText}</span>
         </div>
 
-        <div className={`advanced-panel ${showAdvanced ? "open" : ""}`}>
+        <div className="advanced-panel open result-settings-panel">
           <div className="advanced-panel-inner">
             <div className="advanced-block">
               <h3>카테고리</h3>

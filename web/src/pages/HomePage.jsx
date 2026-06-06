@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeRestaurantCard from "../components/HomeRestaurantCard";
 
@@ -6,7 +6,18 @@ function HomePage() {
   const [restaurants, setRestaurants] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [recommendationMode, setRecommendationMode] = useState("lunch");
+  const categoryRailRefs = useRef({});
   const navigate = useNavigate();
+
+  const categoryOrder = [
+    "한식",
+    "중식",
+    "일식",
+    "양식",
+    "카페/디저트",
+    "분식/간편식",
+    "술집/주점"
+  ];
 
   const recommendationTabs = {
     lunch: {
@@ -35,7 +46,28 @@ function HomePage() {
   const handleSearch = () => {
     navigate(`/results?search=${encodeURIComponent(searchTerm)}`);
   };
-  
+
+  const getRestaurantSubtitle = (restaurant) =>
+    restaurant.category_raw || restaurant.address || restaurant.category;
+
+  const getDisplayScore = (restaurant) =>
+    `${Math.round((restaurant.total_score || 0) * 20)}점`;
+
+  const getCategoryRestaurants = (category) =>
+    restaurants
+      .filter((restaurant) => restaurant.category === category)
+      .sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
+      .slice(0, 12);
+
+  const scrollCategoryRail = (category, direction) => {
+    const rail = categoryRailRefs.current[category];
+    if (!rail) return;
+
+    rail.scrollBy({
+      left: direction * Math.round(rail.clientWidth * 0.8),
+      behavior: "smooth"
+    });
+  };
 
   const activeRecommendation = recommendationTabs[recommendationMode];
   const topRestaurants = restaurants
@@ -60,6 +92,83 @@ function HomePage() {
           }}
         />
           <button onClick={handleSearch}>맞춤 검색</button>
+        </div>
+      </section>
+
+      <section className="category-recommendation-section">
+        <h2 className="section-title">카테고리별 추천 맛집</h2>
+
+        <div className="category-rail-list">
+          {categoryOrder.map((category, index) => {
+            const categoryRestaurants = getCategoryRestaurants(category);
+
+            if (categoryRestaurants.length === 0) {
+              return null;
+            }
+
+            return (
+              <section className="category-rail-section" key={category}>
+                <div className="category-rail-header">
+                  <h3>
+                    <span>{index + 1}.</span> {category}
+                  </h3>
+                </div>
+
+                <div className="category-rail-shell">
+                  <button
+                    className="rail-arrow rail-arrow-left"
+                    onClick={() => scrollCategoryRail(category, -1)}
+                    type="button"
+                    aria-label={`${category} 추천 이전 보기`}
+                  >
+                    ‹
+                  </button>
+
+                  <div
+                    className="category-rail"
+                    ref={(element) => {
+                      categoryRailRefs.current[category] = element;
+                    }}
+                  >
+                    {categoryRestaurants.map((restaurant) => (
+                      <button
+                        className="category-restaurant-card"
+                        key={restaurant.id}
+                        onClick={() => navigate(`/restaurants/${restaurant.id}`)}
+                        type="button"
+                      >
+                        <div className="category-restaurant-image">
+                          {restaurant.thumbnail_url ? (
+                            <img
+                              src={restaurant.thumbnail_url}
+                              alt={`${restaurant.name} 대표 이미지`}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span>{restaurant.name.slice(0, 2)}</span>
+                          )}
+                          <span className="category-score-badge">
+                            {getDisplayScore(restaurant)}
+                          </span>
+                        </div>
+                        <strong>{restaurant.name}</strong>
+                        <span>{getRestaurantSubtitle(restaurant)}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    className="rail-arrow rail-arrow-right"
+                    onClick={() => scrollCategoryRail(category, 1)}
+                    type="button"
+                    aria-label={`${category} 추천 다음 보기`}
+                  >
+                    ›
+                  </button>
+                </div>
+              </section>
+            );
+          })}
         </div>
       </section>
 

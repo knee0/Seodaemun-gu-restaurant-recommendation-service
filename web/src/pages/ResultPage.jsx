@@ -289,32 +289,32 @@ function ResultPage() {
       return true;
     });
 
-  //calc
-  const scoredRestaurants = filteredRestaurants.map((restaurant) => {
-    let weightedScore = 0;
 
+  //calc
+  let finalWeights = [];
+
+  if (!hasCustomWeights) {
+    const equalWeight = 1 / scoreItems.length;
+    finalWeights = scoreItems.map(() => equalWeight);
+  } else {
     const rawWeights = scoreItems.map((item) => weightValues[item.weightKey] || 0);
     const totalWeight = rawWeights.reduce((sum, value) => sum + value, 0);
 
-    //no weights = no advanced setting
-    if (!hasCustomWeights) {
-      const equalWeight = 1 / scoreItems.length;
+    // Pre-normalize weights for no division inside restaurant loop
+    finalWeights = scoreItems.map((item) => 
+      totalWeight > 0 ? (weightValues[item.weightKey] || 0) / totalWeight : 0
+    );
+  }
 
-      weightedScore = scoreItems.reduce((sum, item) => {
-        return sum + getScoreValue(restaurant, item.scoreKey) * equalWeight;
-      }, 0);
-    } else {
-      //유저 설정 가중치
-      weightedScore = scoreItems.reduce((sum, item) => {
-        const normalizedWeight =
-          totalWeight > 0 ? (weightValues[item.weightKey] || 0) / totalWeight : 0;
-        return sum + getScoreValue(restaurant, item.scoreKey) * normalizedWeight;
-      }, 0);
-    }
+  const scoredRestaurants = filteredRestaurants.map((restaurant) => {
+   const weightedScore = scoreItems.reduce((sum, item, index) => {
+    return sum + getScoreValue(restaurant, item.scoreKey) * finalWeights[index];
+  }, 0);
 
     return {
       ...restaurant,
-      recommendationScore: Number(weightedScore.toFixed(2))
+      // Keep raw float for accurate sorting
+      recommendationScore: weightedScore 
     };
   });
 
@@ -325,7 +325,9 @@ function ResultPage() {
     }
 
     if (sortOption === "rating") {
-      return b.total_score - a.total_score;
+      const ratingDiff = (b.total_score || 0) - (a.total_score || 0);
+      if (ratingDiff !== 0) return ratingDiff;
+      return b.recommendationScore - a.recommendationScore;
     }
 
     if (sortOption === "name") {

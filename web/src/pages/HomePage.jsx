@@ -81,7 +81,7 @@ function HomePage() {
     if (!rail) return;
 
     rail.scrollBy({
-      left: direction * Math.round(rail.clientWidth * 0.8),
+      left: direction * Math.round(rail.clientWidth * 0.58),
       behavior: "smooth"
     });
   };

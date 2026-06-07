@@ -247,9 +247,27 @@
   background-color: rgba(8, 33, 79, 0.48);
   color: white;
   cursor: pointer;
-  font-size: 34px;
-  line-height: 1;
+  font-size: 0;
+  line-height: 0;
   transform: translateY(-50%);
+}
+
+.rail-arrow::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  border-top: 3px solid currentColor;
+  border-right: 3px solid currentColor;
+}
+
+.rail-arrow-left::before {
+  transform: rotate(-135deg);
+  margin-left: 4px;
+}
+
+.rail-arrow-right::before {
+  transform: rotate(45deg);
+  margin-right: 4px;
 }
 
 .rail-arrow-left {
@@ -461,38 +479,98 @@
 }
 
 @media (max-width: 640px) {
+  .home-page {
+    background:
+      linear-gradient(180deg, #edf5ff 0%, #f6f8fb 220px, #f3f6fb 100%);
+  }
+
   .section-heading-row {
     align-items: flex-start;
     flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
   .recommendation-tabs {
     width: 100%;
+    gap: 4px;
+    padding: 4px;
   }
 
   .recommendation-tab {
     flex: 1;
+    padding: 8px 10px;
+    font-size: 14px;
   }
 
   .category-recommendation-section,
   .top-section {
-    width: 92%;
+    width: 94%;
+  }
+
+  .category-recommendation-section {
+    padding: 22px 0 8px;
+  }
+
+  .top-section {
+    padding: 20px 0 44px;
+  }
+
+  .category-rail-list {
+    gap: 12px;
+  }
+
+  .category-rail-section {
+    border-radius: 12px;
   }
 
   .category-rail-header {
-    padding: 16px 18px;
+    padding: 12px 14px;
   }
 
   .category-rail-header h3 {
-    font-size: 22px;
+    font-size: 18px;
+  }
+
+  .category-rail-header h3 span {
+    padding: 4px 8px;
+    font-size: 12px;
   }
 
   .category-rail-shell {
-    padding: 14px 12px 18px;
+    padding: 12px 0 14px 12px;
   }
 
   .category-rail {
-    grid-auto-columns: 160px;
+    grid-auto-columns: 136px;
+    gap: 10px;
+    padding-right: 12px;
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .category-restaurant-card {
+    gap: 6px;
+  }
+
+  .category-restaurant-card strong {
+    font-size: 14px;
+  }
+
+  .category-restaurant-card > span {
+    display: none;
+  }
+
+  .category-restaurant-image {
+    border-radius: 10px;
+  }
+
+  .category-score-badge {
+    right: 6px;
+    bottom: 6px;
+    padding: 4px 6px;
+    font-size: 12px;
   }
 
   .rail-arrow {
@@ -501,22 +579,146 @@
 
   .restaurant-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .hero-section {
-    padding-top: 50px;
+    padding: 34px 16px 32px;
   }
 
   .hero-section h1 {
-    font-size: 32px;
+    font-size: 28px;
+    line-height: 1.2;
+    margin-bottom: 12px;
   }
 
   .hero-section p {
-    font-size: 16px;
+    font-size: 14px;
+    margin-bottom: 22px;
+  }
+
+  .search-bar-wrapper {
+    gap: 8px;
+  }
+
+  .search-bar-wrapper input {
+    flex: 1 1 100%;
+    max-width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .search-bar-wrapper button {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
   }
 
   .section-title {
-    font-size: 28px;
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+
+  .home-card,
+  .result-card {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    min-height: 126px;
+    border-radius: 14px;
+  }
+
+  .home-card .restaurant-image-card,
+  .result-card .restaurant-image-card {
+    height: 100%;
+    min-height: 126px;
+  }
+
+  .restaurant-card-body {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .restaurant-card-header {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .restaurant-card-header h3 {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 20px;
+    line-height: 1.22;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .category-badge {
+    flex-shrink: 0;
+    margin-top: 0;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .restaurant-description {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .restaurant-meta {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    font-size: 12px;
+  }
+
+  .restaurant-sub-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  .star-rating {
+    gap: 5px;
+  }
+
+  .star-visual {
+    font-size: 14px;
+    letter-spacing: 0;
+  }
+
+  .star-score {
+    font-size: 13px;
+  }
+
+  .custom-score-panel {
+    gap: 4px 8px;
+    margin: 8px 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .custom-score-label {
+    font-size: 12px;
+  }
+
+  .custom-score-value {
+    font-size: 22px;
+  }
+
+  .custom-score-panel .star-visual {
+    font-size: 13px;
+  }
+
+  .result-card .detail-score-list {
+    display: none;
   }
 }
 
@@ -1299,5 +1501,247 @@
   .weight-slider {
     flex: 1;
     width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .result-page,
+  .detail-page {
+    padding: 16px 10px 40px;
+  }
+
+  .result-top-bar,
+  .result-section {
+    width: 100%;
+  }
+
+  .result-top-bar {
+    margin-bottom: 12px;
+  }
+
+  .result-top-bar button,
+  .detail-back-button {
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+
+  .result-section > .section-title {
+    margin-bottom: 14px;
+    font-size: 23px;
+    line-height: 1.25;
+  }
+
+  .result-search-row {
+    gap: 8px;
+    margin: 8px 0 10px;
+    flex-wrap: nowrap;
+  }
+
+  .result-search-row input {
+    flex-basis: auto;
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  .result-search-row button {
+    flex: 0 0 auto;
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  .result-info-bar {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .info-chip {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
+  .advanced-panel.open {
+    margin-bottom: 14px;
+  }
+
+  .advanced-panel-inner {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .advanced-block + .advanced-block {
+    margin-top: 16px;
+  }
+
+  .advanced-block h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  .advanced-block p {
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .category-list {
+    gap: 7px;
+  }
+
+  .category-button {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .weight-setting-list {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .weight-setting-row {
+    gap: 7px;
+  }
+
+  .weight-setting-label {
+    min-width: auto;
+    font-size: 14px;
+  }
+
+  .weight-slider-group {
+    gap: 10px;
+  }
+
+  .weight-slider {
+    height: 8px;
+  }
+
+  .weight-slider::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+    margin-top: -6px;
+  }
+
+  .weight-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .weight-slider::-moz-range-track {
+    height: 8px;
+  }
+
+  .weight-slider-value {
+    min-width: 24px;
+    font-size: 16px;
+  }
+
+  .selected-priority-preview {
+    margin-top: 12px;
+    font-size: 13px;
+  }
+
+  .advanced-actions {
+    margin-top: 14px;
+  }
+
+  .result-button {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .sort-chip-row {
+    gap: 6px;
+    margin: 4px 0 14px;
+  }
+
+  .sort-chip-label {
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .sort-chip {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .star-rating {
+    gap: 5px;
+  }
+
+  .star-visual {
+    font-size: 14px;
+    letter-spacing: 0;
+  }
+
+  .star-score {
+    font-size: 13px;
+  }
+
+  .detail-container {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .restaurant-image-detail {
+    height: 220px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+  }
+
+  .detail-header {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .detail-header h1 {
+    margin-bottom: 6px;
+    font-size: 32px;
+    line-height: 1.18;
+  }
+
+  .detail-description {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .detail-rating-summary {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+    font-size: 15px;
+  }
+
+  .detail-section {
+    margin-top: 18px;
+    padding-top: 18px;
+  }
+
+  .detail-section h2 {
+    margin-bottom: 12px;
+    font-size: 24px;
+  }
+
+  .detail-score-list {
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .detail-score-row {
+    gap: 10px;
+  }
+
+  .detail-score-label,
+  .detail-info-list p {
+    font-size: 14px;
+  }
+
+  .naver-map-button,
+  .kakao-map-button {
+    width: 100%;
+    padding: 11px 14px;
+    font-size: 14px;
   }
 }

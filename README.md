@@ -1,31 +1,42 @@
 # 서대문구 맛집 추천 서비스!
 
-### Basic GitHub Commands
+## 웹 배포
 
-#### Before working
-```
-git checkout main
-git pull --rebase
-git checkout -b branch-name
-```
+https://knee0.github.io/Seodaemun-gu-restaurant-recommendation-service/
 
-#### Update work
-```
-git add .
-git commit -m "commit message"
-git push -u origin branch-name
-```
+## 기술 스택
 
-#### After merge & branch delete (via GitHub)
-```
-git checkout main
-git pull --rebase
-git branch -d branch-name
-git fetch --prune
-```
+- Kiwi
+- KcELECTRA (https://github.com/Beomi/KcELECTRA)
+- 
 
-#### When local history differs from origin
-```
-git fetch origin
-git reset --hard origin/main
-```
+## 결과 요약
+
+모델 성능 평가 지표 : Macro F1 Score
+
+#### 사전 기반 방식 (골든셋으로 평가)
+
+|     |정밀도|재현율|f1|리뷰 수|
+| :-- | :-- | :-- | :-- |
+|음식_긍정|0.95|0.85|0.90|553|
+|음식_부정|0.39|0.34|0.36|77|
+|서비스_긍정|0.73|0.78|0.76|153|
+|서비스_부정|0.83|0.54|0.65|82|
+|분위기_긍정|0.79|0.66|0.72|190|
+|분위기_부정|0.43|0.41|0.42|37|
+|가격_긍정|0.82|0.68|0.74|104|
+|가격_부정|0.66|0.74|0.69|57|
+|macro avg|0.70|0.62|0.66|1253|
+
+#### BERT 모델
+|     |정밀도|재현율|f1|리뷰 수|
+| :-- | :-- | :-- | :-- |
+|음식_긍정|0.88|0.91|0.89|553|
+|음식_부정|0.36|0.60|0.45|77|
+|서비스_긍정|0.74|0.76|0.75|153|
+|서비스_부정|0.85|0.63|0.73|82|
+|분위기_긍정|0.69|0.84|0.76|190|
+|분위기_부정|0.34|0.51|0.41|37|
+|가격_긍정|0.74|0.76|0.75|104|
+|가격_부정|0.71|0.79|0.75|57|
+|macro avg|0.66|0.73|0.69|1253|

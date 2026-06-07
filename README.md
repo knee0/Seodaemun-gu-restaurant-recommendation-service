@@ -8,7 +8,6 @@ https://knee0.github.io/Seodaemun-gu-restaurant-recommendation-service/
 
 - Kiwi
 - KcELECTRA (https://github.com/Beomi/KcELECTRA)
-- 
 
 ## 결과 요약
 
@@ -16,8 +15,8 @@ https://knee0.github.io/Seodaemun-gu-restaurant-recommendation-service/
 
 #### 사전 기반 방식 (골든셋으로 평가)
 
-|     |정밀도|재현율|f1|리뷰 수|
-| :-- | :-- | :-- | :-- |
+|     |정밀도|재현율|F1|리뷰 수|
+| :---- | ----: | ----: | ----: | ----: |
 |음식_긍정|0.95|0.85|0.90|553|
 |음식_부정|0.39|0.34|0.36|77|
 |서비스_긍정|0.73|0.78|0.76|153|
@@ -26,11 +25,11 @@ https://knee0.github.io/Seodaemun-gu-restaurant-recommendation-service/
 |분위기_부정|0.43|0.41|0.42|37|
 |가격_긍정|0.82|0.68|0.74|104|
 |가격_부정|0.66|0.74|0.69|57|
-|macro avg|0.70|0.62|0.66|1253|
+|Macro avg|0.70|0.62|0.66|1253|
 
 #### BERT 모델
-|     |정밀도|재현율|f1|리뷰 수|
-| :-- | :-- | :-- | :-- |
+|     |정밀도|재현율|F1|리뷰 수|
+| :---- | ----: | ----: | ----: | ----: |
 |음식_긍정|0.88|0.91|0.89|553|
 |음식_부정|0.36|0.60|0.45|77|
 |서비스_긍정|0.74|0.76|0.75|153|
@@ -39,4 +38,4 @@ https://knee0.github.io/Seodaemun-gu-restaurant-recommendation-service/
 |분위기_부정|0.34|0.51|0.41|37|
 |가격_긍정|0.74|0.76|0.75|104|
 |가격_부정|0.71|0.79|0.75|57|
-|macro avg|0.66|0.73|0.69|1253|
+|Macro avg|0.66|0.73|0.69|1253|

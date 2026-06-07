@@ -68,8 +68,13 @@ function HomePage() {
   const getRestaurantSubtitle = (restaurant) =>
     restaurant.category_raw || restaurant.address || restaurant.category;
 
-  const getDisplayScore = (restaurant) =>
-    `${Math.round((restaurant.total_score || 0) * 20)}점`;
+const getDisplayScore = (restaurant) => {
+  if (restaurant.total_score === -1) {
+    return "?";
+  }
+
+  return `${Math.round(restaurant.total_score * 20)}점`;
+};
 
   const getCategoryRestaurants = (category) =>
     restaurants

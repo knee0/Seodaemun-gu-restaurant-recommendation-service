@@ -3,7 +3,12 @@ function StarRating({ score }) {
   floor rating data in 0.5 intervals & display stars
   user still sees original data, not floored
   */
-  const numericScore = Number.isFinite(Number(score)) ? Number(score) : 0;
+ const rawScore = Number(score);
+
+ const numericScore =
+  Number.isFinite(rawScore)
+    ? Math.max(rawScore, 0)
+    : 0;
   const flooredToHalf = Math.floor(numericScore * 2) / 2;
   const percentage = (flooredToHalf / 5) * 100;
 
@@ -19,7 +24,9 @@ function StarRating({ score }) {
         </div>
       </div>
 
-      <span className="star-score">{numericScore.toFixed(1)}</span>
+    <span className="star-score">
+      {rawScore === -1 ? "?" : numericScore.toFixed(1)}
+    </span>
     </div>
   );
 }

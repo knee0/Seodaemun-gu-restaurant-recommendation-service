@@ -25810,5 +25810,96 @@
     "address": "서울특별시 서대문구 이화여대길 26, 2층 (대현동, 별관)",
     "naver_url": "https://m.place.naver.com/restaurant/31442520",
     "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260408_185%2F1775616955767KLz0a_JPEG%2FIMG_6415.jpeg"
+  },
+  {
+    "id": "r798",
+    "name": "한경관",
+    "category": "한식",
+    "category_raw": "연세대학교의 학식당",
+    "is_franchise": false,
+    "total_score": -1,
+    "scores": {
+      "food": -1,
+      "price": -1,
+      "mood": -1,
+      "service": -1
+    },
+    "is_lunch_recommended": true,
+    "is_dinner_recommended": true,
+    "menus": [
+      "한경관 뷔페",
+      "제육볶음",
+      "로제 파스타"
+    ],
+    "address": "서울 서대문구 연세로 50",
+    "naver_url": "https://m.place.naver.com/restaurant/31683806",
+    "thumbnail_url": ""
+  },
+  {
+    "id": "r799",
+    "name": "맛나샘",
+    "category": "한식",
+    "category_raw": "연세대학교의 학식당",
+    "is_franchise": false,
+    "total_score": -1,
+    "scores": {
+      "food": -1,
+      "price": -1,
+      "mood": -1,
+      "service": -1
+    },
+    "is_lunch_recommended": true,
+    "is_dinner_recommended": true,
+    "menus": [
+
+    ],
+    "address": "서울 서대문구 연세로 50",
+    "naver_url": "https://m.place.naver.com/restaurant/18745769",
+    "thumbnail_url": ""
+  },
+  {
+    "id": "r800",
+    "name": "부를샘",
+    "category": "한식",
+    "category_raw": "연세대학교의 학식당",
+    "is_franchise": false,
+    "total_score": -1,
+    "scores": {
+      "food": -1,
+      "price": -1,
+      "mood": -1,
+      "service": -1
+    },
+    "is_lunch_recommended": true,
+    "is_dinner_recommended": true,
+    "menus": [
+      "부를샘 뷔페"
+    ],
+    "address": "서울 서대문구 연세로 50",
+    "naver_url": "https://m.place.naver.com/restaurant/2142893934",
+    "thumbnail_url": ""
+  },
+  {
+    "id": "r801",
+    "name": "고를샘 트레비앙",
+    "category": "카페/디저트",
+    "category_raw": "연세대학교의 학식당 카페",
+    "is_franchise": false,
+    "total_score": -1,
+    "scores": {
+      "food": -1,
+      "price": -1,
+      "mood": -1,
+      "service": -1
+    },
+    "is_lunch_recommended": true,
+    "is_dinner_recommended": true,
+    "menus": [
+      "와플",
+      "누텔라 와플"
+    ],
+    "address": "서울 서대문구 연세로 50",
+    "naver_url": "https://m.place.naver.com/restaurant/1824801055",
+    "thumbnail_url": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20240814_102%2F172364478960392qOa_JPEG%2FIMG_8165.jpeg"
   }
 ]

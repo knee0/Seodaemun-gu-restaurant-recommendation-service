@@ -35,12 +35,12 @@ function ResultRestaurantCard({ restaurant }) {
 
         <div className="custom-score-panel">
           <span className="custom-score-label">맞춤 총점</span>
-          <strong className="custom-score-value">{mainScore.toFixed(2)}</strong>
+          <strong className="custom-score-value">{mainScore <= 0 ? "?" : mainScore.toFixed(2)}</strong>
           <StarRating score={mainScore} />
         </div>
 
         <div className="restaurant-sub-meta">
-          <span>기본 평점 {restaurant.total_score?.toFixed(1) ?? "-"}</span>
+          <span>기본 평점 {restaurant.total_score === -1 ? "?" : restaurant.total_score?.toFixed(1)} </span>
           {typeof restaurant.review_count === "number" && (
             <span>리뷰 {restaurant.review_count}개</span>
           )}

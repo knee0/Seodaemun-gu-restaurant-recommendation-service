@@ -1,7 +1,8 @@
-from src.utils import SCORES, load_json, save_json
+from src.utils import SCORES, load_json, save_json, PREP
 
 INPUT = SCORES / "final_scores.json"
-OUTPUT = SCORES / "web_format_scores.json"
+OUTPUT = SCORES / "web_prep.json"
+METADATA = PREP / "metadata.json"
 
 def web_format(data):
     formatted_list = []
@@ -10,10 +11,10 @@ def web_format(data):
         res_data = contents.get("res_data", {})
         aspect_scores = contents.get("aspect_scores", {})
         
-        food = round(aspect_scores.get("음식", 0.0), 1)
-        price = round(aspect_scores.get("가격", 0.0), 1)
-        mood = round(aspect_scores.get("분위기", 0.0), 1)
-        service = round(aspect_scores.get("서비스", 0.0), 1)
+        food = aspect_scores.get("음식", 0.0)
+        price = aspect_scores.get("가격", 0.0)
+        mood = aspect_scores.get("분위기", 0.0)
+        service = aspect_scores.get("서비스", 0.0)
         
         scores = {
             "food": food,
@@ -29,6 +30,10 @@ def web_format(data):
         clean_menu = list(dict.fromkeys(raw_menu)) if raw_menu else []
         raw_url = res_data.get("naver_url")
         clean_url = raw_url.split("/review")[0] if raw_url else None
+
+        category = res_data.get("category")
+        if category == "세계요리":
+            category == "아시안/세계요리"
         
         # 4. Construct the beautiful flattened dictionary
         record = {
@@ -38,7 +43,7 @@ def web_format(data):
             "category_raw": res_data.get("category_raw"),
             "total_score": total_score,
             "scores": scores,
-            "menus": clean_menu,  # Look at that, no more duplicate ramen!
+            "menus": clean_menu,
             "address": res_data.get("address"),
             "naver_url": clean_url,
             "thumbnail_url": res_data.get("thumbnail_url")

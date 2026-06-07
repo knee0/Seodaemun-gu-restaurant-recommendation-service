@@ -44,6 +44,7 @@ function HomePage() {
   const [restaurants, setRestaurants] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [recommendationMode, setRecommendationMode] = useState("lunch");
+  const [recommendationShuffleKey, setRecommendationShuffleKey] = useState(0);
   const categoryRailRefs = useRef({});
   const navigate = useNavigate();
 
@@ -86,6 +87,11 @@ function HomePage() {
     });
   };
 
+  const handleRecommendationTabClick = (key) => {
+    setRecommendationMode(key);
+    setRecommendationShuffleKey((currentKey) => currentKey + 1);
+  };
+
   const activeRecommendation = RECOMMENDATION_TABS[recommendationMode];
   const topRestaurants = useMemo(() => {
     const candidates = restaurants.filter((restaurant) => {
@@ -96,7 +102,7 @@ function HomePage() {
     });
 
     return pickRandomRestaurants(candidates, 5);
-  }, [activeRecommendation.flag, recommendationMode, restaurants]);
+  }, [activeRecommendation.flag, recommendationMode, recommendationShuffleKey, restaurants]);
 
   return (
     <div className="home-page">
@@ -209,7 +215,7 @@ function HomePage() {
                     ? "recommendation-tab active"
                     : "recommendation-tab"
                 }
-                onClick={() => setRecommendationMode(key)}
+                onClick={() => handleRecommendationTabClick(key)}
                 type="button"
               >
                 {tab.label}

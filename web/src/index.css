@@ -6,3 +6,8 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
 }
+
+body.is-restoring-scroll #root {
+  opacity: 0;
+  pointer-events: none;
+}

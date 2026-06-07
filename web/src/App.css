@@ -242,6 +242,7 @@
   justify-content: center;
   width: 40px;
   height: 40px;
+  padding: 0;
   border: none;
   border-radius: 50%;
   background-color: rgba(8, 33, 79, 0.48);
@@ -254,6 +255,9 @@
 
 .rail-arrow::before {
   content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 11px;
   height: 11px;
   border-top: 3px solid currentColor;
@@ -261,13 +265,11 @@
 }
 
 .rail-arrow-left::before {
-  transform: rotate(-135deg);
-  margin-left: 4px;
+  transform: translate(-50%, -50%) rotate(-135deg);
 }
 
 .rail-arrow-right::before {
-  transform: rotate(45deg);
-  margin-right: 4px;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .rail-arrow-left {

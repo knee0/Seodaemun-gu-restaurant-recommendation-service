@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   HashRouter,
   Route,
@@ -184,6 +184,60 @@ function ScrollPositionManager() {
   return null;
 }
 
+function ScrollToTopButton() {
+  const location = useLocation();
+  const [isVisible, setIsVisible] = useState(false);
+  const isDetailPage = location.pathname.startsWith("/restaurants/");
+
+  useEffect(() => {
+    const updateVisibility = () => {
+      setIsVisible(window.scrollY > 420);
+    };
+
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", updateVisibility);
+    };
+  }, [location.pathname]);
+
+  if (isDetailPage || !isVisible) {
+    return null;
+  }
+
+  const handleScrollToTop = () => {
+    const startY = window.scrollY;
+    const duration = 280;
+    const startTime = performance.now();
+
+    const scrollStep = (currentTime) => {
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+      window.scrollTo(0, Math.round(startY * (1 - easedProgress)));
+
+      if (progress < 1) {
+        requestAnimationFrame(scrollStep);
+      }
+    };
+
+    requestAnimationFrame(scrollStep);
+  };
+
+  return (
+    <button
+      className="scroll-top-button"
+      onClick={handleScrollToTop}
+      type="button"
+      aria-label="맨 위로 이동"
+    >
+      <span className="scroll-top-label">맨 위로 이동</span>
+      <span className="scroll-top-circle" aria-hidden="true" />
+    </button>
+  );
+}
+
 function App() {
   return (
     <HashRouter>
@@ -193,6 +247,7 @@ function App() {
         <Route path="/results" element={<ResultPage />} />
         <Route path="/restaurants/:id" element={<DetailPage />} />
       </Routes>
+      <ScrollToTopButton />
     </HashRouter>
   );
 }
